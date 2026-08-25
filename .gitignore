@@ -1,0 +1,21 @@
+# Python and notebook caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Local secrets
+.env
+.env.*
+!.env.template
+
+# Runtime-only root artifacts
+audit.jsonl
+/outputs/
+
+# Notes
+*.md
+*.png
+!README.md
+!**/README.md

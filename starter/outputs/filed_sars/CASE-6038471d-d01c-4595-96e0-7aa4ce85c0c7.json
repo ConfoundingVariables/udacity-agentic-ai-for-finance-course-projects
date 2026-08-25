@@ -1,0 +1,90 @@
+{
+  "filing_id": "SAR-2b1a3c73-12fa-469c-9a5c-0073f6728036",
+  "case_id": "CASE-6038471d-d01c-4595-96e0-7aa4ce85c0c7",
+  "generated_at": "2026-08-24T14:04:28.310624Z",
+  "status": "approved",
+  "subject": {
+    "customer_id": "CUST_0053",
+    "name": "Tracy Lewis",
+    "date_of_birth": "1966-10-26",
+    "ssn_last_4": "1828",
+    "address": "8016 Nicole Stream Suite 650, Williamsside, ID 48017",
+    "phone": "+1-341-468-7849",
+    "customer_since": "2024-05-11",
+    "risk_rating": "Medium",
+    "occupation": "Nurse, mental health",
+    "annual_income": 131925.0
+  },
+  "accounts": [
+    {
+      "account_id": "CUST_0053_ACC_1",
+      "customer_id": "CUST_0053",
+      "account_type": "Money_Market",
+      "opening_date": "2024-07-23",
+      "current_balance": 17676.35,
+      "average_monthly_balance": 89530.85,
+      "status": "Active"
+    },
+    {
+      "account_id": "CUST_0053_ACC_2",
+      "customer_id": "CUST_0053",
+      "account_type": "Savings",
+      "opening_date": "2024-08-20",
+      "current_balance": 62101.19,
+      "average_monthly_balance": 132766.49,
+      "status": "Active"
+    },
+    {
+      "account_id": "CUST_0053_ACC_3",
+      "customer_id": "CUST_0053",
+      "account_type": "Business_Checking",
+      "opening_date": "2024-11-10",
+      "current_balance": 90679.35,
+      "average_monthly_balance": 193505.85,
+      "status": "Active"
+    }
+  ],
+  "transaction_summary": {
+    "transaction_count": 94,
+    "total_amount": 274025.18,
+    "activity_start": "2025-02-06",
+    "activity_end": "2025-07-31"
+  },
+  "risk_analysis": {
+    "case_id": "CASE-6038471d-d01c-4595-96e0-7aa4ce85c0c7",
+    "suspicious_activity_type": "Structuring",
+    "confidence_score": 0.93,
+    "risk_level": "High",
+    "reasoning": "Data Review: 94 transactions totaling $274,025.18. Pattern Recognition: 7 cash deposits from $9,000 to under $10,000; Cash-band total $67,569.06. Regulatory Mapping: indicators are triage evidence and require human review. Risk Quantification: High at 0.93 confidence. Classification Decision: Structuring.",
+    "suspicious_indicators": [
+      "7 cash deposits from $9,000 to under $10,000",
+      "Cash-band total $67,569.06"
+    ]
+  },
+  "risk_human_decision": {
+    "decision": "Approved",
+    "reviewer": "Notebook Reviewer",
+    "rationale": "Repeated cash deposits in the under-$10,000 band require a factual narrative review",
+    "decided_at": "2026-08-24T14:04:28.256042Z"
+  },
+  "compliance_output": {
+    "case_id": "CASE-6038471d-d01c-4595-96e0-7aa4ce85c0c7",
+    "sar_narrative": "Who: Tracy Lewis (CUST_0053), using CUST_0053_ACC_1, CUST_0053_ACC_2, CUST_0053_ACC_3. What: conducted 94 transactions totaling $274,025.18. When: activity occurred from 2025-02-06 through 2025-07-31. Where: activity involved Branch_Airport_Terminal, Branch_Downtown_Main, Branch_Eastside_Center. Why: observed facts\u20147 cash deposits from $9,000 to under $10,000; Cash-band total $67,569.06\u2014may indicate structuring and require human review. Supporting transaction records are retained; unknown counterparties or locations remain unverified.",
+    "regulatory_citations": [
+      "31 C.F.R. \u00a7 1010.311 (currency transaction reports)",
+      "31 C.F.R. \u00a7 1010.314 (aggregation)",
+      "31 C.F.R. \u00a7 1020.320(a)(2)(ii) (transactions designed to evade BSA requirements)",
+      "FinCEN, Guidance on Preparing a Complete and Sufficient SAR Narrative"
+    ],
+    "completeness_check": true,
+    "reasoning": "ReACT result: verified case and risk facts; selected the material who/what/when/where/why evidence; used calibrated language; retained unknowns; and applied only the classification-specific source set.",
+    "word_count": 57
+  },
+  "compliance_human_decision": {
+    "decision": "Approved",
+    "reviewer": "Notebook Compliance Reviewer",
+    "rationale": "The narrative is factual, complete, within the simulation limit, and source-grounded",
+    "decided_at": "2026-08-24T14:04:28.304260Z"
+  },
+  "audit_log": "D:\\Udacity Course Agentic AI For Financial Services\\Course 1\\project\\starter\\outputs\\audit_logs\\phase4_notebook.jsonl"
+}

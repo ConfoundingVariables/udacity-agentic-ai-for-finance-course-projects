@@ -1,0 +1,88 @@
+{
+  "filing_id": "SAR-905e3e69-6eaa-4d35-965e-7abe3c28e345",
+  "case_id": "CASE-26e4bff8-e06e-486d-9941-4395cab0b478",
+  "generated_at": "2026-08-25T11:41:16.792207Z",
+  "status": "approved_educational_simulation",
+  "educational_disclaimer": "Synthetic educational output; not submitted to FinCEN and not legal advice.",
+  "subject": {
+    "customer_id": "CUST_0057",
+    "name": "Cindy Clayton",
+    "date_of_birth": "1961-08-31",
+    "ssn_last_4": "5450",
+    "address": "08330 Robert Stravenue, Garciaberg, AL 72636",
+    "phone": "(367)573-4540",
+    "customer_since": "2020-05-26",
+    "risk_rating": "High",
+    "occupation": "Applications developer",
+    "annual_income": 163820.0
+  },
+  "accounts": [
+    {
+      "account_id": "CUST_0057_ACC_1",
+      "customer_id": "CUST_0057",
+      "account_type": "Checking",
+      "opening_date": "2023-11-18",
+      "current_balance": 30581.8,
+      "average_monthly_balance": 126331.6,
+      "status": "Active"
+    },
+    {
+      "account_id": "CUST_0057_ACC_2",
+      "customer_id": "CUST_0057",
+      "account_type": "Money_Market",
+      "opening_date": "2021-06-14",
+      "current_balance": 61133.48,
+      "average_monthly_balance": 132905.48,
+      "status": "Active"
+    },
+    {
+      "account_id": "CUST_0057_ACC_3",
+      "customer_id": "CUST_0057",
+      "account_type": "Business_Checking",
+      "opening_date": "2021-06-17",
+      "current_balance": 88286.77,
+      "average_monthly_balance": 174758.47,
+      "status": "Active"
+    }
+  ],
+  "transaction_summary": {
+    "transaction_count": 101,
+    "total_amount": 286342.62,
+    "activity_start": "2025-02-05",
+    "activity_end": "2025-08-02"
+  },
+  "risk_analysis": {
+    "case_id": "CASE-26e4bff8-e06e-486d-9941-4395cab0b478",
+    "suspicious_activity_type": "Other",
+    "confidence_score": 0.55,
+    "risk_level": "Medium",
+    "reasoning": "Data Review: 101 transactions totaling $286,342.62. Pattern Recognition: No supported primary classification threshold was met. Regulatory Mapping: indicators are triage evidence and require human review. Risk Quantification: Medium at 0.55 confidence. Classification Decision: Other.",
+    "suspicious_indicators": [
+      "No supported primary classification threshold was met"
+    ]
+  },
+  "risk_human_decision": {
+    "decision": "Approved",
+    "reviewer": "ok",
+    "rationale": "good",
+    "decided_at": "2026-08-25T11:41:03.064299Z"
+  },
+  "compliance_output": {
+    "case_id": "CASE-26e4bff8-e06e-486d-9941-4395cab0b478",
+    "sar_narrative": "Who: Cindy Clayton (CUST_0057), using CUST_0057_ACC_1, CUST_0057_ACC_2, CUST_0057_ACC_3. What: conducted 101 transactions totaling $286,342.62. When: activity occurred from 2025-02-05 through 2025-08-02. Where: activity involved Branch_Downtown_Main, Branch_Eastside_Center, Branch_Financial_District. Why: observed facts\u2014No supported primary classification threshold was met\u2014may indicate other and require human review. Supporting transaction records are retained; unknown counterparties or locations remain unverified.",
+    "regulatory_citations": [
+      "31 C.F.R. \u00a7 1020.320(a)(2) (bank suspicious transaction reporting)",
+      "FinCEN, Guidance on Preparing a Complete and Sufficient SAR Narrative"
+    ],
+    "completeness_check": true,
+    "reasoning": "ReACT result: verified case and risk facts; selected the material who/what/when/where/why evidence; used calibrated language; retained unknowns; and applied only the classification-specific source set.",
+    "word_count": 53
+  },
+  "compliance_human_decision": {
+    "decision": "Approved",
+    "reviewer": "asd",
+    "rationale": "asd",
+    "decided_at": "2026-08-25T11:41:16.778111Z"
+  },
+  "audit_log": "D:\\Udacity Course Agentic AI For Financial Services\\Course 1\\project\\starter\\outputs\\audit_logs\\workflow.jsonl"
+}

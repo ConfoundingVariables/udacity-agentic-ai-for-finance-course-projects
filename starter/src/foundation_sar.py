@@ -131,10 +131,24 @@ class RiskAnalystOutput(DomainModel):
     )
     confidence_score: float = Field(ge=0, le=1)
     risk_level: Literal["Low", "Medium", "High", "Critical"]
+    primary_indicator: str = Field(
+        default="",
+        validation_alias=AliasChoices("primary_indicator", "main_indicator"),
+    )
     reasoning: str = Field(min_length=1)
     suspicious_indicators: list[str] = Field(
         validation_alias=AliasChoices("suspicious_indicators", "key_indicators")
     )
+
+    @model_validator(mode="after")
+    def fill_primary_indicator(self) -> RiskAnalystOutput:
+        if not self.primary_indicator:
+            self.primary_indicator = (
+                self.suspicious_indicators[0]
+                if self.suspicious_indicators
+                else "No primary indicator identified"
+            )
+        return self
 
     @property
     def classification(self) -> str:
@@ -147,7 +161,6 @@ class RiskAnalystOutput(DomainModel):
         """Compatibility name used by supplied tests and notebooks."""
 
         return self.suspicious_indicators
-
 
 class ComplianceOfficerOutput(DomainModel):
     case_id: str = Field(min_length=1)

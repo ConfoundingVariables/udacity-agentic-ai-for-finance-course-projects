@@ -1,0 +1,9 @@
+[tool.ruff]
+line-length = 88
+exclude = ["starter/tests"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "ignore:cannot collect 'test_client'.*:pytest.PytestCollectionWarning",
+  "ignore:cannot collect 'test_logger'.*:pytest.PytestCollectionWarning",
+]

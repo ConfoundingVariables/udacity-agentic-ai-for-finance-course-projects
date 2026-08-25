@@ -1,109 +1,104 @@
-# README Template
+# Educational AML/SAR Review System
 
-Below is a template provided for us**Complete test documentation**: `test_results/test_results.md`
+An suspicious-activity review workflow built with Python, Pydantic, pandas, FastAPI, OpenAI-compatible agents, and a vanilla HTML interface.
 
-## Project Instructions
+## Workflow
 
-This section should contain all the student deliverables for this project.
+```text
+CSV data → validated case → Risk Analyst → human risk gate
+         → Compliance Officer → human compliance gate → SAR JSON + audit outputs
+```
 
-### Quick Testing Reference
+Human approval is authoritative at both gates. Compliance generation cannot run before risk approval, and a SAR cannot be created before final compliance approval.
 
-Students should validate their implementations using the progressive test suite:
+## Repository layout
+
+- `starter/data/` — synthetic customer, account, and transaction CSV files
+- `starter/src/` — schemas, data loading, agents, and workflow state machine
+- `starter/sar_app/` — FastAPI adapter and self-contained review interface
+- `starter/notebooks/` — data exploration, agent development, and integration demonstrations
+- `starter/tests/` — supplied evaluator tests
+- `tests/` — project-level regression and submission checks
+- `scripts/smoke_api.py` — end-to-end API smoke test
+- `outputs/` — generated audit, SAR, and metrics artifacts
+
+## Setup
+
+From the repository root:
 
 ```bash
-# Test individual phases as you complete them
-python -m pytest tests/test_foundation.py -v      # Phase 1: Foundation
-python -m pytest tests/test_risk_analyst.py -v    # Phase 2: Risk Analyst  
-python -m pytest tests/test_compliance_officer.py -v # Phase 3: Compliance Officer
-
-# Final validation - all components working together
-python -m pytest tests/ -v                        # All 30 tests should pass
+python -m pip install -r requirements.txt
+python -m pip install -r starter/requirements.txt
 ```
 
-Tests automatically skip when modules aren't implemented yet, providing clear feedback on progress.when building your README file for students.
+Optional OpenAI-compatible configuration can be placed in `starter/.env`:
 
-# Project Title
-
-Project description goes here.
-
-## Getting Started
-
-Instructions for how to get a copy of the project running on your local machine.
-
-### Dependencies
-
-```
-Examples here
+```text
+OPENAI_API_KEY=<credential>
+OPENAI_BASE_URL=https://openai.vocareum.com/v1
+OPENAI_MODEL=gpt-4
+SAR_AGENT_MODE=auto
 ```
 
-### Installation
+Use `SAR_AGENT_MODE=deterministic` for a fully local demonstration. Credentials are not logged.
 
-Step by step explanation of how to get a dev environment running.
-
-List out the steps
-
-```
-Give an example here
-```
-
-## Testing
-
-The project includes comprehensive test suites for all modules to ensure reliability and correctness.
-
-### Running Tests
+## Run the application
 
 ```bash
-# Run all tests
-cd project/solution
-python -m pytest tests/ -v
-
-# Run individual module tests
-python -m pytest tests/test_foundation.py -v        # Core data structures
-python -m pytest tests/test_risk_analyst.py -v     # Chain-of-Thought agent
-python -m pytest tests/test_compliance_officer.py -v # ReACT agent
+SAR_AGENT_MODE=deterministic python -m uvicorn sar_app.server:app --app-dir starter --host 127.0.0.1 --port 8000
 ```
 
-### Test Coverage
+Open <http://127.0.0.1:8000>, then:
 
-**30 comprehensive tests** across 3 modules:
-- **Foundation SAR (10 tests)**: Data validation, case creation, audit logging
-- **Risk Analyst Agent (10 tests)**: Agent initialization, case analysis, error handling  
-- **Compliance Officer Agent (10 tests)**: Narrative generation, regulatory compliance
+1. Select a customer and inspect the validated case facts.
+2. Run the five-step Risk Analyst review.
+3. Record a named human risk decision and rationale.
+4. If approved, review the Compliance Officer narrative and citations.
+5. Record the final human compliance decision.
+6. Inspect generated SAR, audit, and metrics artifacts.
 
-### Test Results
+## Agent contracts
 
-Complete test results and validation proof available in:
-- `project/solution/test_results/test_results.md` - Consolidated test results and instructions
-- All tests pass with 100% success rate (3.17s execution time)
-- Validates production readiness and regulatory compliance
+### Risk Analyst
 
-### Break Down Tests
+- Follows Data Review, Pattern Recognition, Regulatory Mapping, Risk Quantification, and Classification Decision.
+- Supports `Structuring`, `Sanctions`, `Fraud`, `Money_Laundering`, and `Other` classifications.
+- Constrains confidence to 0–1 and risk level to Low, Medium, High, or Critical.
+- Requires confirmed authoritative evidence for a Sanctions classification.
 
-**Foundation Tests**: Validate core data structures and utilities
-- Customer/Account/Transaction data validation
-- Case aggregation and schema compliance
-- CSV data loading and audit logging
+### Compliance Officer
 
-**Risk Analyst Tests**: Validate Chain-of-Thought analysis workflow  
-- OpenAI API integration and response parsing
-- JSON extraction from various response formats
-- Error handling for malformed responses
+- Uses a ReACT Reasoning/Action/Conclusion contract.
+- Includes factual who, what, when, where, and why elements.
+- Preserves material unknowns and uses calibrated language.
+- Enforces the 120-word course-simulation limit.
+- Applies source-controlled, classification-specific citations.
 
-**Compliance Officer Tests**: Validate ReACT regulatory narrative generation
-- 120-word narrative limit enforcement
-- Regulatory citation and terminology validation
-- Multi-format response parsing and validation
-## Project Instructions
+## Verification
 
-This section should contain all the student deliverables for this project.
+```bash
+python -m ruff check .
+python -m pytest -q
+```
 
-## Built With
+With the application running in deterministic mode, run:
 
-* [Item1](www.item1.com) - Description of item
-* [Item2](www.item2.com) - Description of item
-* [Item3](www.item3.com) - Description of item
+```bash
+python scripts/smoke_api.py
+```
 
-Include all items used to build project.
+Execute the integration notebook from the repository root with:
 
-## License
-[License](../LICENSE.md)
+```bash
+jupyter nbconvert --to notebook --execute --inplace starter/notebooks/03_workflow_integration.ipynb
+```
+
+## Limitations
+
+- Data and filings are synthetic educational artifacts.
+- Live OFAC screening is not performed; only explicitly supplied confirmed evidence is accepted.
+- Regulatory triggers depend on institution type and facts; citations do not replace legal review.
+- Metrics are educational cost estimates, not provider billing records.
+- Workflow state is in memory; generated audit, metric, and SAR artifacts persist on disk.
+
+Further regulatory context is documented in [`regulatory_research.md`](regulatory_research.md).

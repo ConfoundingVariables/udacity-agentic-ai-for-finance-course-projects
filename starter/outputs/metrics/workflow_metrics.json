@@ -1,15 +1,15 @@
 {
-  "cases_analyzed": 2,
-  "risk_approved": 1,
+  "cases_analyzed": 5,
+  "risk_approved": 3,
   "risk_rejected": 1,
-  "compliance_generated": 1,
-  "compliance_approved": 1,
+  "compliance_generated": 3,
+  "compliance_approved": 2,
   "compliance_rejected": 0,
-  "filed_sars": 1,
-  "avoided_compliance_calls": 1,
-  "average_risk_processing_ms": 8.997249999083579,
-  "average_compliance_processing_ms": 9.468299998843577,
-  "staged_estimated_cost_usd": 0.008,
-  "unstaged_estimated_cost_usd": 0.012,
-  "estimated_cost_saved_usd": 0.004
+  "filed_sars": 2,
+  "avoided_compliance_calls": 2,
+  "average_risk_processing_ms": 9.213639999506995,
+  "average_compliance_processing_ms": 9.149566668687234,
+  "staged_estimated_cost_usd": 0.022,
+  "unstaged_estimated_cost_usd": 0.03,
+  "estimated_cost_saved_usd": 0.008
 }

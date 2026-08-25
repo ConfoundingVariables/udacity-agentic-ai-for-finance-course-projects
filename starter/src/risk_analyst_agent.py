@@ -35,8 +35,9 @@ class RiskAnalystAgent:
         self.model = model
         self.fallback_on_error = fallback_on_error
         self.system_prompt = """You are a Financial Crime Risk Analyst for an AML review system.
-Use a five-step Chain-of-Thought framework, but return only a concise, auditable rationale rather than private hidden deliberation:
-1. Data Review — summarize customer, account, transaction, and screening facts.
+Analyze validated facts and return a concise, auditable classification. Do not reveal private chain-of-thought or hidden deliberation.
+Review the case in these five explicit dimensions:
+1. Data Review — identify only the facts needed for the decision.
 2. Pattern Recognition — identify temporal, amount, velocity, counterparty, channel, and geographic patterns.
 3. Regulatory Mapping — map facts to relevant BSA/AML concepts without claiming a legal conclusion.
 4. Risk Quantification — assign confidence from 0 to 1 and risk level Low, Medium, High, or Critical.
@@ -47,7 +48,19 @@ Guardrails:
 - Never infer a sanctions match from country, name similarity, transaction text, or missing data. Classify Sanctions only when authoritative screening evidence explicitly confirms a match.
 - Do not use transaction-ID labels as evidence.
 - Distinguish observed facts from inference and acknowledge missing facts.
-- Respond with one JSON object only using: classification, confidence_score, reasoning, key_indicators, risk_level.
+- Select one primary_indicator: the strongest observed pattern supporting the classification.
+- Explain in reasoning why that primary indicator supports the classification. Do not repeat aggregate totals or restate key_indicators in reasoning.
+
+Output format: return exactly one JSON object with these keys in this order:
+{
+  "classification": "Money_Laundering",
+  "confidence_score": 0.72,
+  "risk_level": "High",
+  "primary_indicator": "one concise observed pattern",
+  "reasoning": "one concise explanation connecting the primary indicator to the classification",
+  "key_indicators": ["distinct supporting observed facts"]
+}
+All keys are required. Use no markdown or prose outside the JSON object.
 """
 
     def analyze_case(
@@ -195,11 +208,18 @@ Guardrails:
         self, case: CaseData, evidence: Mapping[str, Any]
     ) -> RiskAnalystOutput:
         indicators: list[str] = []
+        primary_indicator: str
         if evidence["confirmed_ofac_matches"]:
             classification = "Sanctions"
             risk_level = "Critical"
             confidence = 0.98
-            indicators.append("Authoritative OFAC SLS screening result marked confirmed")
+            primary_indicator = "Confirmed authoritative OFAC SLS screening match"
+            indicators.append(primary_indicator)
+            reasoning = (
+                "An authoritative confirmed screening match is the strongest "
+                "supported reason for a Sanctions classification. Human review "
+                "is required before any filing decision."
+            )
         elif evidence["cash_deposits_9000_to_under_10000"] >= 3:
             classification = "Structuring"
             risk_level = "High"
@@ -207,11 +227,17 @@ Guardrails:
                 0.98,
                 0.65 + 0.04 * evidence["cash_deposits_9000_to_under_10000"],
             )
+            primary_indicator = "Repeated cash deposits just below the CTR threshold"
             indicators.extend(
                 [
                     f"{evidence['cash_deposits_9000_to_under_10000']} cash deposits from $9,000 to under $10,000",
                     f"Cash-band total ${evidence['cash_band_total']:,.2f}",
                 ]
+            )
+            reasoning = (
+                "Repeated cash deposits just below the CTR threshold can indicate "
+                "threshold avoidance, making Structuring the leading triage "
+                "classification. Human review is required."
             )
         elif any(
             token in (transaction.description or "").lower()
@@ -221,11 +247,18 @@ Guardrails:
             classification = "Fraud"
             risk_level = "High"
             confidence = 0.82
-            indicators.append("Transaction descriptions contain explicit fraud-related facts")
+            primary_indicator = "Explicit fraud-related facts in transaction descriptions"
+            indicators.append(primary_indicator)
+            reasoning = (
+                "Explicit fraud-related facts in transaction descriptions are the "
+                "strongest supported reason for a Fraud classification. Human "
+                "review is required."
+            )
         elif evidence["wire_count"] >= 3 and evidence["wire_total"] >= 50_000:
             classification = "Money_Laundering"
             risk_level = "High"
             confidence = 0.72
+            primary_indicator = "Repeated high-value wire activity"
             indicators.extend(
                 [
                     f"{evidence['wire_count']} wire transactions",
@@ -233,25 +266,28 @@ Guardrails:
                     f"{evidence['unique_counterparties']} identified counterparties",
                 ]
             )
+            reasoning = (
+                "Repeated high-value wire activity can indicate movement or "
+                "layering of funds, making Money_Laundering the leading triage "
+                "classification. Human review is required."
+            )
         else:
             classification = "Other"
             risk_level = "Low" if evidence["transaction_count"] < 20 else "Medium"
             confidence = 0.55
-            indicators.append("No supported primary classification threshold was met")
+            primary_indicator = "No supported primary classification threshold was met"
+            indicators.append(primary_indicator)
+            reasoning = (
+                "No supported primary classification threshold was met. The case "
+                "remains Other pending human review of the available evidence."
+            )
 
-        reasoning = (
-            f"Data Review: {evidence['transaction_count']} transactions totaling "
-            f"${evidence['total_amount']:,.2f}. Pattern Recognition: "
-            f"{'; '.join(indicators)}. Regulatory Mapping: indicators are triage "
-            "evidence and require human review. Risk Quantification: "
-            f"{risk_level} at {confidence:.2f} confidence. Classification Decision: "
-            f"{classification}."
-        )
         return RiskAnalystOutput(
             case_id=case.case_id,
             suspicious_activity_type=classification,
             confidence_score=confidence,
             risk_level=risk_level,
+            primary_indicator=primary_indicator,
             reasoning=reasoning,
             suspicious_indicators=indicators,
         )

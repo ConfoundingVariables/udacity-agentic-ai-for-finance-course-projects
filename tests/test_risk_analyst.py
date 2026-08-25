@@ -122,6 +122,28 @@ def test_deterministic_structuring_and_verified_sanctions_rules(tmp_path):
     )
 
 
+def test_money_laundering_output_explains_primary_indicator(tmp_path):
+    case = make_case(
+        [
+            transaction(
+                number,
+                transaction_type="Wire_Transfer",
+                amount=20_000,
+                method="Wire",
+            )
+            for number in range(1, 4)
+        ]
+    )
+    result = RiskAnalystAgent(
+        None, ExplainabilityLogger(tmp_path / "money_laundering.jsonl")
+    ).analyze_case(case)
+
+    assert result.suspicious_activity_type == "Money_Laundering"
+    assert result.primary_indicator == "Repeated high-value wire activity"
+    assert "movement or layering of funds" in result.reasoning
+    assert "totaling" not in result.reasoning
+
+
 def test_api_and_malformed_output_failures_are_audited(tmp_path):
     case = make_case([transaction(1)])
 

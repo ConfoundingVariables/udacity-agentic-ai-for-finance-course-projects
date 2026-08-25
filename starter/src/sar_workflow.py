@@ -382,11 +382,16 @@ class SarWorkflow:
     def list_outputs(self) -> list[dict[str, str]]:
         if not self.filed_sars_dir.exists():
             return []
-        return [
-            {"name": path.name, "path": str(path)}
-            for path in sorted(self.filed_sars_dir.glob("*.json"))
-        ]
-
+        outputs: list[dict[str, str]] = []
+        for path in sorted(self.filed_sars_dir.glob("*.json")):
+            outputs.append(
+                {
+                    "name": path.name,
+                    "path": str(path),
+                    "content": path.read_text(encoding="utf-8"),
+                }
+            )
+        return outputs
     def _write_derived_outputs(self) -> None:
         self.logger.write_summary(self.audit_summary_path)
         metrics = self.metrics()

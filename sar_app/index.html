@@ -255,6 +255,7 @@
     .workspace {
       display: grid;
       grid-template-columns: minmax(280px, 0.35fr) minmax(0, 1fr);
+      height: 720px;
       min-height: 720px;
       overflow: hidden;
       border: 1px solid var(--line);
@@ -262,21 +263,36 @@
       background: var(--white);
       box-shadow: var(--shadow-card);
     }
-    .queue { display: flex; min-width: 0; flex-direction: column; border-right: 1px solid var(--line); background: var(--lifted); }
-    .queue-head { padding: 28px; border-bottom: 1px solid var(--line); }
-    .queue-title { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-    .queue-count { color: var(--slate); font-size: 13px; }
-    .search {
-      width: 100%;
-      min-height: 48px;
-      margin-top: 20px;
-      padding: 12px 20px;
-      border: 1px solid rgba(20,20,19,.45);
-      border-radius: var(--radius-pill);
-      color: var(--ink);
-      background: var(--white);
-    }
-    .case-list { flex: 1; max-height: 700px; margin: 0; padding: 12px; overflow-y: auto; list-style: none; }
+    .queue { display: flex; min-width: 0; min-height: 0; overflow: hidden; flex-direction: column; border-right: 1px solid var(--line); background: var(--lifted); }
+    .case-view { min-width: 0; min-height: 0; overflow-y: auto; padding: 40px; }
+.queue-head { padding: 28px; border-bottom: 1px solid var(--line); }
+.queue-title { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.queue-count { color: var(--slate); font-size: 13px; }
+.search {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 20px;
+  padding: 12px 20px;
+  border: 1px solid rgba(20,20,19,.45);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  background: var(--white);
+}
+.queue-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.filter-button {
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--slate);
+  background: var(--white);
+  font-size: 12px;
+  cursor: pointer;
+}
+.filter-button[aria-pressed="true"] { color: var(--white); border-color: var(--ink); background: var(--ink); }
+.sort-note { margin: 12px 0 0; color: var(--slate); font-size: 12px; }
+.case-list { flex: 1; min-height: 0; margin: 0; padding: 12px; overflow-y: auto; list-style: none; }
+
     .case-button {
       display: block;
       width: 100%;
@@ -305,8 +321,10 @@
     .risk-high { color: var(--danger); }
     .risk-medium { color: #7b4a00; }
     .risk-low { color: var(--success); }
+    .risk-critical { color: #7a183d; }
 
     .case-view { min-width: 0; padding: 40px; }
+
     .empty { min-height: 620px; display: grid; place-items: center; text-align: center; }
     .empty-copy { max-width: 480px; }
     .empty-orbit { display: grid; width: 130px; height: 130px; margin: 0 auto 24px; place-items: center; border: 1px solid var(--signal-light); border-radius: 50%; color: var(--signal); font-size: 38px; }
@@ -360,10 +378,25 @@
     .success-callout { color: #234a3e; background: #e3eee9; }
 
     .details { margin-top: 24px; }
-    details { border-top: 1px solid var(--line); }
-    summary { min-height: 52px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 700; }
-    .account-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; padding: 0 0 20px; }
-    .account { padding: 18px; border-radius: 20px; background: var(--canvas); }
+    .audit-list, .output-list { margin: 20px 0 0; padding: 0; list-style: none; }
+    .audit-item, .output-item { padding: 14px 0; border-top: 1px solid var(--line); }
+    .audit-meta { color: var(--slate); font-size: 12px; }
+    .audit-action { display: block; margin-top: 4px; font-weight: 700; }
+    .audit-details, .output-details { border-top: 0; }
+    .audit-details summary, .output-details summary { min-height: auto; display: block; }
+    .audit-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+    .json-view {
+      max-height: 320px;
+      margin: 14px 0 0;
+      padding: 16px;
+      overflow: auto;
+      border-radius: 16px;
+      color: var(--charcoal);
+      background: var(--white);
+      font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
     .account p { margin: 6px 0 0; color: var(--slate); font-size: 13px; }
     .table-wrap { max-height: 380px; margin-bottom: 20px; overflow: auto; border: 1px solid var(--line); border-radius: 20px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -371,13 +404,18 @@
     td { padding: 13px; border-bottom: 1px solid var(--line); vertical-align: top; }
     tbody tr:nth-child(even) { background: var(--canvas); }
 
+    .risk-output-table { margin-bottom: 20px; }
+    .risk-output-table tbody th {
+      position: static;
+      width: 28%;
+      color: var(--slate);
+      background: transparent;
+      text-align: left;
+      white-space: normal;
+    }
     .evidence-section { padding: 96px 0; }
     .evidence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 36px; }
     .evidence-card { padding: 32px; border-radius: var(--radius-card); background: var(--lifted); border: 1px solid var(--line); }
-    .audit-list, .output-list { margin: 20px 0 0; padding: 0; list-style: none; }
-    .audit-item, .output-item { padding: 14px 0; border-top: 1px solid var(--line); }
-    .audit-meta { color: var(--slate); font-size: 12px; }
-    .audit-action { display: block; margin-top: 4px; font-weight: 700; }
 
     .footer { margin-top: 72px; padding: 80px 0 112px; color: var(--white); background: var(--ink); }
     .footer-inner { width: min(calc(100% - 48px), var(--content)); margin: 0 auto; }
@@ -407,6 +445,7 @@
       .hero { grid-template-columns: 1fr; gap: 32px; padding-top: 56px; }
       .metrics { grid-template-columns: repeat(2, 1fr); }
       .workspace { grid-template-columns: 1fr; }
+      .workspace { height: auto; }
       .queue { border-right: 0; border-bottom: 1px solid var(--line); }
       .case-list { max-height: 300px; }
       .facts { grid-template-columns: repeat(2, 1fr); }
@@ -512,6 +551,14 @@
               <div class="queue-title"><h3>Customers</h3><span class="queue-count" id="queue-count">0 cases</span></div>
               <label class="visually-hidden" for="case-search">Filter customers</label>
               <input class="search" id="case-search" type="search" placeholder="Search name or customer ID">
+              <div class="queue-filters" role="group" aria-label="Filter customers by risk">
+                <button class="filter-button" type="button" data-risk-filter="all" aria-pressed="true">All</button>
+                <button class="filter-button" type="button" data-risk-filter="Low" aria-pressed="false">Low</button>
+                <button class="filter-button" type="button" data-risk-filter="Medium" aria-pressed="false">Medium</button>
+                <button class="filter-button" type="button" data-risk-filter="High" aria-pressed="false">High</button>
+                <button class="filter-button" type="button" data-risk-filter="Critical" aria-pressed="false">Critical</button>
+              </div>
+              <p class="sort-note">Sorted by criticality · Critical first</p>
             </div>
             <ul class="case-list" id="case-list"></ul>
           </aside>
@@ -554,6 +601,7 @@
       selectedSummary: null,
       caseData: null,
       workflow: null,
+      riskFilter: "all",
       busy: false,
     };
 
@@ -595,12 +643,32 @@
       finally { state.busy = false; $("case-view").classList.remove("loading"); }
     }
 
+    const RISK_ORDER = { Critical: 4, High: 3, Medium: 2, Low: 1 };
+
     function riskClass(risk) { return `risk-${String(risk || "low").toLowerCase()}`; }
+
+    function applyQueueFilters(query = $("case-search").value) {
+      const normalizedQuery = query.trim().toLowerCase();
+      state.filteredCases = state.cases
+        .filter((item) => {
+          const matchesQuery = item.name.toLowerCase().includes(normalizedQuery)
+            || item.customer_id.toLowerCase().includes(normalizedQuery);
+          const matchesRisk = state.riskFilter === "all" || item.risk_rating === state.riskFilter;
+          return matchesQuery && matchesRisk;
+        })
+        .sort((left, right) => (
+          (RISK_ORDER[right.risk_rating] || 0) - (RISK_ORDER[left.risk_rating] || 0)
+          || left.name.localeCompare(right.name)
+        ));
+    }
 
     function renderQueue() {
       const list = $("case-list");
       list.replaceChildren();
       $("queue-count").textContent = `${state.filteredCases.length} cases`;
+      document.querySelectorAll("[data-risk-filter]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.riskFilter === state.riskFilter));
+      });
       state.filteredCases.forEach((item) => {
         const li = create("li");
         const button = create("button", "case-button");
@@ -617,6 +685,7 @@
         list.append(li);
       });
     }
+
 
     async function selectCase(summary) {
       await withBusy(async () => {
@@ -716,10 +785,44 @@
       head.append(copy);
       head.append(create("span", "status-pill", "Human review required"));
       section.append(head);
-      section.append(create("p", "reasoning", risk.reasoning));
-      const list = create("ul", "indicator-list");
-      risk.suspicious_indicators.forEach((indicator) => list.append(create("li", "", indicator)));
-      section.append(list);
+
+      const primaryIndicator = risk.primary_indicator || risk.suspicious_indicators?.[0] || "Not identified";
+      const supportingIndicators = (risk.suspicious_indicators || []).filter((indicator) => indicator !== primaryIndicator);
+      const rows = [
+        ["Classification", risk.suspicious_activity_type.replaceAll("_", " ")],
+        ["Risk level", risk.risk_level],
+        ["Confidence", `${Math.round(risk.confidence_score * 100)}%`],
+        ["Main indicator", primaryIndicator],
+        ["Reasoning", risk.reasoning || "Not provided"],
+      ];
+      const tableWrap = create("div", "table-wrap risk-output-table");
+      const table = create("table");
+      const headerRow = create("tr");
+      ["Analysis field", "Finding"].forEach((label) => headerRow.append(create("th", "", label)));
+      const thead = create("thead");
+      thead.append(headerRow);
+      const tbody = create("tbody");
+      rows.forEach(([label, value]) => {
+        const row = create("tr");
+        row.append(create("th", "", label));
+        row.append(create("td", "", value));
+        tbody.append(row);
+      });
+      const evidenceRow = create("tr");
+      evidenceRow.append(create("th", "", "Supporting evidence"));
+      const evidenceCell = create("td");
+      if (supportingIndicators.length) {
+        const list = create("ul", "indicator-list");
+        supportingIndicators.forEach((indicator) => list.append(create("li", "", indicator)));
+        evidenceCell.append(list);
+      } else {
+        evidenceCell.textContent = "No additional indicators provided.";
+      }
+      evidenceRow.append(evidenceCell);
+      tbody.append(evidenceRow);
+      table.append(thead, tbody);
+      tableWrap.append(table);
+      section.append(tableWrap);
       return section;
     }
 
@@ -769,6 +872,8 @@
       form.append(row);
       form.addEventListener("submit", (event) => {
         event.preventDefault();
+        const decisionLabel = isCompliance ? "Approve SAR filing" : "Approve compliance review";
+        if (!window.confirm(`Confirm ${decisionLabel}? This records your decision and ${isCompliance ? "writes the SAR file" : "starts compliance generation"}.`)) return;
         submitDecision(kind, "Approved", reviewer.value, rationale.value);
       });
       return form;
@@ -883,14 +988,29 @@
       $("analyzed-count").textContent = String(metrics.cases_analyzed);
       $("avoided-count").textContent = String(metrics.avoided_compliance_calls);
 
+      const prettyJson = (value) => {
+        if (typeof value === "string") {
+          try { return JSON.stringify(JSON.parse(value), null, 2); }
+          catch (_) { return value; }
+        }
+        return JSON.stringify(value ?? {}, null, 2);
+      };
+
       const auditList = $("audit-list");
       auditList.replaceChildren();
       if (!audit.length) auditList.append(create("li", "audit-item", "No workflow events yet."));
       audit.slice().reverse().forEach((entry) => {
         const item = create("li", "audit-item");
-        item.append(create("span", "audit-meta", `${new Date(entry.timestamp).toLocaleString()} · ${entry.component}`));
-        item.append(create("span", "audit-action", entry.action.replaceAll("_", " ")));
-        if (entry.user_decision) item.append(create("span", "audit-meta", `Human decision: ${entry.user_decision}`));
+        const details = create("details", "audit-details");
+        const summary = create("summary");
+        const summaryRow = create("div", "audit-summary");
+        const meta = `${new Date(entry.timestamp).toLocaleString()} · ${entry.component}`;
+        summaryRow.append(create("span", "audit-meta", meta));
+        summaryRow.append(create("span", "audit-action", entry.action.replaceAll("_", " ")));
+        summary.append(summaryRow);
+        if (entry.user_decision) summary.append(create("span", "audit-meta", `Human decision: ${entry.user_decision}`));
+        details.append(summary, create("pre", "json-view", prettyJson(entry)));
+        item.append(details);
         auditList.append(item);
       });
 
@@ -899,8 +1019,13 @@
       if (!outputs.length) outputList.append(create("li", "output-item", "No SAR outputs yet."));
       outputs.forEach((output) => {
         const item = create("li", "output-item");
-        item.append(create("strong", "", output.name));
-        item.append(create("div", "audit-meta", output.path));
+        const details = create("details", "output-details");
+        const summary = create("summary");
+        summary.append(create("strong", "", output.name));
+        summary.append(create("div", "audit-meta", output.path));
+        const fileContent = output.content ?? output.document ?? output;
+        details.append(summary, create("pre", "json-view", prettyJson(fileContent)));
+        item.append(details);
         outputList.append(item);
       });
     }
@@ -909,7 +1034,7 @@
       try {
         const [summary, cases] = await Promise.all([request("/api/summary"), request("/api/cases?limit=150")]);
         state.cases = cases;
-        state.filteredCases = cases;
+        applyQueueFilters();
         $("customers-count").textContent = String(summary.customer_count);
         $("transactions-count").textContent = String(summary.transaction_count);
         $("agent-mode").textContent = summary.agent_mode === "deterministic" ? "Deterministic demo" : "OpenAI + fallback";
@@ -920,9 +1045,16 @@
     }
 
     $("case-search").addEventListener("input", (event) => {
-      const query = event.target.value.trim().toLowerCase();
-      state.filteredCases = state.cases.filter((item) => item.name.toLowerCase().includes(query) || item.customer_id.toLowerCase().includes(query));
+      applyQueueFilters(event.target.value);
       renderQueue();
+    });
+
+    document.querySelectorAll("[data-risk-filter]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.riskFilter = button.dataset.riskFilter;
+        applyQueueFilters();
+        renderQueue();
+      });
     });
 
     initialize();

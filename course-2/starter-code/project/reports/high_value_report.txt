@@ -1,21 +1,19 @@
 ============================================================
 SWIFT PROCESSING REPORT: high_value_report
-Generated: 2026-09-17T13:12:19.731243
+Generated: 2026-09-17T14:48:49.202524
 ============================================================
 
 OPERATIONAL METRICS
 ------------------------------------------------------------
-Total messages       : 5
-Valid / Invalid      : 5 / 0
-Clean / Fraudulent   : 5 / 0
-STP count            : 5
+Total messages       : 3
+Valid / Invalid      : 3 / 0
+Clean / Fraudulent   : 3 / 0
+STP count            : 3
 STP RATE             : 100.0%
-Total value          : $11,163,642.95
+Total value          : $529,455.36
 
 TRANSACTIONS
 ------------------------------------------------------------
-23dea1f7-fbef-446e-ae9b-a2e6291921ee | MT103 | 3063947.26 GBP | val=VALID | fraud=CLEAN (18.75) | decision=None
-9b9df291-4539-4038-85b5-11d448f1f49e | MT202 | 992325.37 USD | val=VALID | fraud=CLEAN (20.0) | decision=None
-55694826-36a7-4163-b325-f392e245dd6d | MT103 | 800425.31 HKD | val=VALID | fraud=CLEAN (20.0) | decision=None
-f6cc8bce-066b-483d-999d-00174c186b88 | MT103 | 50206.82 USD | val=VALID | fraud=CLEAN (15.0) | decision=None
-6bd4cec3-e603-499f-8e13-cfc27b45eeb6 | MT202 | 6256738.19 EUR | val=VALID | fraud=CLEAN (27.5) | decision=None
+b97ef620-153f-4e02-88f5-5efbf13be285 | MT103 | 97903.55 USD | val=VALID | fraud=CLEAN (15.0) | decision=None
+996dd299-96f4-45ab-aa60-2856a5cae046 | MT103 | 76363.07 USD | val=VALID | fraud=CLEAN (15.0) | decision=None
+bb784a1c-1e01-47c7-812e-f3e51569e81b | MT103 | 355188.74 EUR | val=VALID | fraud=CLEAN (15.0) | decision=None

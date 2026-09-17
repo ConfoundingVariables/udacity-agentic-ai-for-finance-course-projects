@@ -20,5 +20,8 @@ audit.jsonl
 !README.md
 !**/README.md
 
+# Submission screenshots
+!course-2/Screenshot*.png
+
 # Playwright CLI artifacts
 .playwright*/

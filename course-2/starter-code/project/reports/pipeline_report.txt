@@ -1,0 +1,31 @@
+============================================================
+SWIFT PROCESSING REPORT: pipeline_report
+Generated: 2026-09-17T13:12:19.727623
+============================================================
+
+OPERATIONAL METRICS
+------------------------------------------------------------
+Total messages       : 10
+Valid / Invalid      : 10 / 0
+Clean / Fraudulent   : 10 / 0
+STP count            : 10
+STP RATE             : 100.0%
+Total value          : $11,195,862.35
+
+ORCHESTRATOR REPORT SETS
+------------------------------------------------------------
+[non_fraudulent] 10 msgs, 4 tasks -> Processed 4 tasks for 10 messages (4 completed) across 5 workers.
+[high_value] 5 msgs, 5 tasks -> Processed 5 tasks for 5 messages (5 completed) across 5 workers.
+
+TRANSACTIONS
+------------------------------------------------------------
+23dea1f7-fbef-446e-ae9b-a2e6291921ee | MT103 | 3063947.26 GBP | val=VALID | fraud=CLEAN (18.75) | decision=None
+9b9df291-4539-4038-85b5-11d448f1f49e | MT202 | 992325.37 USD | val=VALID | fraud=CLEAN (20.0) | decision=None
+cb57093f-3d81-4601-b69d-1d834104d685 | MT103 | 20327.21 USD | val=VALID | fraud=CLEAN (10.0) | decision=None
+c9dfe4dd-4d7d-435f-a2d9-064bc96fd360 | MT202 | 3578.58 EUR | val=VALID | fraud=CLEAN (2.5) | decision=None
+4a2ebba2-01ba-48d5-b155-c07dcbceb034 | MT103 | 746.82 USD | val=VALID | fraud=CLEAN (7.5) | decision=None
+0954fe9a-ff00-4a84-bc22-e3fa24b0c13e | MT202 | 3797.23 EUR | val=VALID | fraud=CLEAN (2.5) | decision=None
+55694826-36a7-4163-b325-f392e245dd6d | MT103 | 800425.31 HKD | val=VALID | fraud=CLEAN (20.0) | decision=None
+9f052b0d-ce58-4390-b1ba-90ebbb0646d4 | MT103 | 3769.56 EUR | val=VALID | fraud=CLEAN (2.5) | decision=None
+f6cc8bce-066b-483d-999d-00174c186b88 | MT103 | 50206.82 USD | val=VALID | fraud=CLEAN (15.0) | decision=None
+6bd4cec3-e603-499f-8e13-cfc27b45eeb6 | MT202 | 6256738.19 EUR | val=VALID | fraud=CLEAN (27.5) | decision=None

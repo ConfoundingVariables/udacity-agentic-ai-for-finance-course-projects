@@ -19,3 +19,6 @@ audit.jsonl
 *.png
 !README.md
 !**/README.md
+
+# Playwright CLI artifacts
+.playwright*/

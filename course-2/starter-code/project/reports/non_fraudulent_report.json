@@ -1,0 +1,174 @@
+{
+  "report_name": "non_fraudulent_report",
+  "generated_at": "2026-09-17T13:12:19.730179",
+  "metrics": {
+    "total_messages": 10,
+    "valid_messages": 10,
+    "invalid_messages": 0,
+    "fraudulent_messages": 0,
+    "clean_messages": 10,
+    "stp_count": 10,
+    "stp_rate_pct": 100.0,
+    "total_value": 11195862.35
+  },
+  "prompt_chain_summary": {},
+  "orchestrator_sets": [],
+  "transactions": [
+    {
+      "message_id": "23dea1f7-fbef-446e-ae9b-a2e6291921ee",
+      "message_type": "MT103",
+      "amount": "3063947.26",
+      "currency": "GBP",
+      "validation_status": "VALID",
+      "fraud_status": "CLEAN",
+      "fraud_score": 18.75,
+      "fraud_decision": null,
+      "fraud_reasons": [
+        "[FraudAmountDetectionAgent] High amount transaction: 3063947.26",
+        "[FraudAmountDetectionAgent] Large amount with unusual decimal precision",
+        "[AIAnomalyDetectionAgent] Very large amount: 3,063,947.26",
+        "[AIAnomalyDetectionAgent] AI: Very large amount: 3,063,947.26",
+        "[GeographicRiskAgent] Cross-border corridor: AU -> CA"
+      ]
+    },
+    {
+      "message_id": "9b9df291-4539-4038-85b5-11d448f1f49e",
+      "message_type": "MT202",
+      "amount": "992325.37",
+      "currency": "USD",
+      "validation_status": "VALID",
+      "fraud_status": "CLEAN",
+      "fraud_score": 20.0,
+      "fraud_decision": null,
+      "fraud_reasons": [
+        "[FraudAmountDetectionAgent] High amount transaction: 992325.37",
+        "[FraudAmountDetectionAgent] Large amount with unusual decimal precision",
+        "[AIAnomalyDetectionAgent] Rare leading digit 9 (Benford p=0.05)",
+        "[AIAnomalyDetectionAgent] Large amount: 992,325.37",
+        "[AIAnomalyDetectionAgent] AI: Rare leading digit 9 (Benford p=0.05)",
+        "[AIAnomalyDetectionAgent] AI: Large amount: 992,325.37",
+        "[GeographicRiskAgent] Cross-border corridor: JP -> GB"
+      ]
+    },
+    {
+      "message_id": "cb57093f-3d81-4601-b69d-1d834104d685",
+      "message_type": "MT103",
+      "amount": "20327.21",
+      "currency": "USD",
+      "validation_status": "VALID",
+      "fraud_status": "CLEAN",
+      "fraud_score": 10.0,
+      "fraud_decision": null,
+      "fraud_reasons": [
+        "[FraudAmountDetectionAgent] High amount transaction: 20327.21",
+        "[GeographicRiskAgent] Cross-border corridor: JP -> FR"
+      ]
+    },
+    {
+      "message_id": "c9dfe4dd-4d7d-435f-a2d9-064bc96fd360",
+      "message_type": "MT202",
+      "amount": "3578.58",
+      "currency": "EUR",
+      "validation_status": "VALID",
+      "fraud_status": "CLEAN",
+      "fraud_score": 2.5,
+      "fraud_decision": null,
+      "fraud_reasons": [
+        "[GeographicRiskAgent] Cross-border corridor: US -> CA"
+      ]
+    },
+    {
+      "message_id": "4a2ebba2-01ba-48d5-b155-c07dcbceb034",
+      "message_type": "MT103",
+      "amount": "746.82",
+      "currency": "USD",
+      "validation_status": "VALID",
+      "fraud_status": "CLEAN",
+      "fraud_score": 7.5,
+      "fraud_decision": null,
+      "fraud_reasons": [
+        "[AIAnomalyDetectionAgent] Rare leading digit 7 (Benford p=0.06)",
+        "[GeographicRiskAgent] Cross-border corridor: GB -> JP"
+      ]
+    },
+    {
+      "message_id": "0954fe9a-ff00-4a84-bc22-e3fa24b0c13e",
+      "message_type": "MT202",
+      "amount": "3797.23",
+      "currency": "EUR",
+      "validation_status": "VALID",
+      "fraud_status": "CLEAN",
+      "fraud_score": 2.5,
+      "fraud_decision": null,
+      "fraud_reasons": [
+        "[GeographicRiskAgent] Cross-border corridor: CA -> US"
+      ]
+    },
+    {
+      "message_id": "55694826-36a7-4163-b325-f392e245dd6d",
+      "message_type": "MT103",
+      "amount": "800425.31",
+      "currency": "HKD",
+      "validation_status": "VALID",
+      "fraud_status": "CLEAN",
+      "fraud_score": 20.0,
+      "fraud_decision": null,
+      "fraud_reasons": [
+        "[FraudAmountDetectionAgent] High amount transaction: 800425.31",
+        "[FraudAmountDetectionAgent] Large amount with unusual decimal precision",
+        "[AIAnomalyDetectionAgent] Rare leading digit 8 (Benford p=0.05)",
+        "[AIAnomalyDetectionAgent] Large amount: 800,425.31",
+        "[AIAnomalyDetectionAgent] AI: Rare leading digit 8 (Benford p=0.05)",
+        "[AIAnomalyDetectionAgent] AI: Large amount: 800,425.31",
+        "[GeographicRiskAgent] Cross-border corridor: DE -> US"
+      ]
+    },
+    {
+      "message_id": "9f052b0d-ce58-4390-b1ba-90ebbb0646d4",
+      "message_type": "MT103",
+      "amount": "3769.56",
+      "currency": "EUR",
+      "validation_status": "VALID",
+      "fraud_status": "CLEAN",
+      "fraud_score": 2.5,
+      "fraud_decision": null,
+      "fraud_reasons": [
+        "[GeographicRiskAgent] Cross-border corridor: US -> JP"
+      ]
+    },
+    {
+      "message_id": "f6cc8bce-066b-483d-999d-00174c186b88",
+      "message_type": "MT103",
+      "amount": "50206.82",
+      "currency": "USD",
+      "validation_status": "VALID",
+      "fraud_status": "CLEAN",
+      "fraud_score": 15.0,
+      "fraud_decision": null,
+      "fraud_reasons": [
+        "[FraudAmountDetectionAgent] High amount transaction: 50206.82",
+        "[AIAnomalyDetectionAgent] Rare leading digit 5 (Benford p=0.08)",
+        "[GeographicRiskAgent] Cross-border corridor: CA -> AU"
+      ]
+    },
+    {
+      "message_id": "6bd4cec3-e603-499f-8e13-cfc27b45eeb6",
+      "message_type": "MT202",
+      "amount": "6256738.19",
+      "currency": "EUR",
+      "validation_status": "VALID",
+      "fraud_status": "CLEAN",
+      "fraud_score": 27.5,
+      "fraud_decision": null,
+      "fraud_reasons": [
+        "[FraudAmountDetectionAgent] High amount transaction: 6256738.19",
+        "[FraudAmountDetectionAgent] Large amount with unusual decimal precision",
+        "[AIAnomalyDetectionAgent] Rare leading digit 6 (Benford p=0.07)",
+        "[AIAnomalyDetectionAgent] Very large amount: 6,256,738.19",
+        "[AIAnomalyDetectionAgent] AI: Rare leading digit 6 (Benford p=0.07)",
+        "[AIAnomalyDetectionAgent] AI: Very large amount: 6,256,738.19",
+        "[GeographicRiskAgent] Cross-border corridor: US -> HK"
+      ]
+    }
+  ]
+}

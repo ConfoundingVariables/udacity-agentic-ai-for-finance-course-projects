@@ -3,7 +3,7 @@
 Projects for the four-course program, organized by course:
 
 - [Course 1 — Educational AML/SAR Review System](course-1/README.md)
-- Course 2 — coming soon
+- [Course 2 — SWIFT Multi-Agent Transaction Processing System](course-2/starter-code/project/README.md)
 - Course 3 — coming soon
 - Course 4 — coming soon
 

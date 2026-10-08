@@ -1,0 +1,6 @@
+target-version = "py311"
+line-length = 120
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["BLE001"]  # broad excepts are deliberate: tools degrade gracefully instead of crashing the agent

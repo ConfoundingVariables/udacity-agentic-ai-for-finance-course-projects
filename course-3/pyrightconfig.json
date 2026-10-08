@@ -1,0 +1,8 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonVersion": "3.11",
+  "include": ["starter-code/starter_code/helper_modules"],
+  "extraPaths": ["starter-code/starter_code"],
+  "reportMissingImports": "warning"
+}

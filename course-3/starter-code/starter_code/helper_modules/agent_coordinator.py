@@ -99,13 +99,8 @@ class AgentCoordinator:
         return [(n, self._check_and_apply_pii_protection(n, self._execute_tool(tools[n], query))) for n in selected]
 
     def _synthesize_results(self, query: str, results: list[tuple[str, str]]) -> str:
-        sources = "\n\n".join(f"[Source: {name}]\n{text}" for name, text in results)
-        return str(self.llm.complete(
-            "You are a financial analyst. Using ONLY the tool outputs below, answer the question.\n"
-            "Format: a one-sentence direct answer, then supporting points grouped by source, then any data "
-            "gaps or conflicts. Keep masked PII masked and do not invent data.\n\n"
-            f"Question: {query}\n\nTool outputs:\n{sources}\n\nAnswer:"
-        )).strip()
+        sources = "\n".join(f'<source name="{name}">\n{text}\n</source>' for name, text in results)
+        return str(self.llm.complete(CONFIG["prompts"]["synthesis"].format(query=query, sources=sources))).strip()
 
     def query(self, question: str, verbose: bool | None = None) -> str:
         """Answer a question end to end: route, run tools, protect PII, synthesize if needed, record metrics."""

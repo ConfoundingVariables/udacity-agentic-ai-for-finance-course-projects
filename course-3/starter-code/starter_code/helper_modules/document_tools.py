@@ -6,17 +6,21 @@ and exposed as a QueryEngineTool named {SYMBOL}_10k_filing_tool.
 """
 
 import json
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from functools import cache
 from pathlib import Path
 
 import numpy as np
-from llama_index.core import Settings, SimpleDirectoryReader, VectorStoreIndex
+from llama_index.core import PromptTemplate, Settings, SimpleDirectoryReader, VectorStoreIndex
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.schema import TextNode
 from llama_index.core.tools import QueryEngineTool
+from llama_index.readers.file import PDFReader
 
 from .models import CONFIG, active_provider, configure_models
+
+logging.getLogger().setLevel(logging.WARNING)  # llama_index.readers.file calls basicConfig(level=INFO) on import
 
 DOCS_DIR = Path(__file__).resolve().parent.parent / "data" / "10k_documents"
 INDEX_DIR = Path(__file__).resolve().parent.parent / "runtime" / "indexes"  # one folder per company + embedding model
@@ -41,7 +45,9 @@ class DocumentToolsManager:
         try:
             tool = QueryEngineTool.from_defaults(
                 query_engine=_index(symbol, active_provider().embedding).as_query_engine(
-                    similarity_top_k=CONFIG["documents"]["similarity_top_k"]),
+                    similarity_top_k=CONFIG["documents"]["similarity_top_k"],
+                    text_qa_template=PromptTemplate(CONFIG["prompts"]["document_qa"]).partial_format(
+                        company=COMPANY_NAMES[symbol])),
                 name=f"{symbol}_10k_filing_tool",
                 description=CONFIG["tools"]["document"].format(name=COMPANY_NAMES[symbol], symbol=symbol),
             )
@@ -60,7 +66,9 @@ class DocumentToolsManager:
 def _embed_and_save(symbol: str, saved: Path):
     """Chunk the 10-K, embed the chunks in concurrent batches, save texts.json + vectors.npy."""
     cfg = CONFIG["documents"]
-    docs = SimpleDirectoryReader(input_files=[str(DOCS_DIR / f"{symbol}_10K_2024.pdf")]).load_data()
+    # Explicit PDFReader: SimpleDirectoryReader silently reads PDFs as raw bytes when it is missing.
+    docs = SimpleDirectoryReader(input_files=[str(DOCS_DIR / f"{symbol}_10K_2024.pdf")],
+                                 file_extractor={".pdf": PDFReader()}).load_data()
     splitter = SentenceSplitter(chunk_size=cfg["chunk_size"], chunk_overlap=cfg["chunk_overlap"])
     texts = [node.get_content() for node in splitter.get_nodes_from_documents(docs)]
     size = CONFIG["models"]["embed_batch_size"]

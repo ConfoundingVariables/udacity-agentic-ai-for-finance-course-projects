@@ -99,9 +99,9 @@ class FunctionToolsManager:
         """
         sql = error = ""
         for _ in range(2):
-            prompt = (f"{DB_SCHEMA}\n\nWrite ONE SQLite SELECT statement answering: {query}\n"
-                      + (f"The previous attempt failed with: {error}\n" if error else "")
-                      + "Return only the SQL, no markdown or explanation.")
+            prompts = CONFIG["prompts"]
+            prompt = prompts["sql"].format(schema=DB_SCHEMA, query=query,
+                                           error=prompts["sql_retry"].format(error=error) if error else "")
             sql = re.sub(r"```(sql)?", "", str(self.llm.complete(prompt)), flags=re.I).strip().split(";")[0]
             try:
                 columns, rows = self._run_sql(sql)
@@ -116,8 +116,11 @@ class FunctionToolsManager:
     def _quote(self, symbol: str) -> str:
         """One formatted quote line; stored DB price if Yahoo is down or rate-limited."""
         try:
-            m = self._fetch_chart(symbol)["meta"]
-            price, prev = m["regularMarketPrice"], m["chartPreviousClose"]
+            chart = self._fetch_chart(symbol)
+            m = chart["meta"]
+            # chartPreviousClose is the close before the whole history range, so take yesterday's daily close.
+            closes = [c for c in chart["indicators"]["quote"][0]["close"] if c is not None]
+            price, prev = m["regularMarketPrice"], closes[-2]
             change = price - prev
             return (f"{symbol}: ${price:,.2f} | Change: {change:+.2f} ({change / prev * 100:+.2f}%)"
                     f" | Volume: {m.get('regularMarketVolume') or 0:,} [source: Yahoo Finance]")
@@ -264,7 +267,8 @@ class FunctionToolsManager:
                         f"  ALERT: {sym} {wt:.0%} of portfolio — over-concentrated"
                         f" for {risk_tol} risk tolerance (max {max_wt:.0%})")
                 detail.append(
-                    f"  {sym}: {shares:.2f} sh | Cost ${cost:,.2f} | Value ${value:,.2f} ({src})"
+                    f"  {sym}: {shares:.2f} sh @ ${cost / shares:,.2f}/sh paid, now ${value / shares:,.2f}/sh"
+                    f" | Total cost ${cost:,.2f} | Value ${value:,.2f} ({src})"
                     f" | P&L {pnl:+,.2f} ({pnl_pct:+.2f}%) | Weight {wt:.1%}")
 
             total_pnl = total_value - total_cost

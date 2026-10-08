@@ -8,8 +8,9 @@ numpy>=1.24.3
 python-dotenv>=1.0.0
 requests>=2.31.0
 
-# PDF reading for SimpleDirectoryReader
+# PDF reading for SimpleDirectoryReader (without readers-file, PDFs are read as raw bytes)
 pypdf>=4.0.0
+llama-index-readers-file>=0.4
 
 # Real-time market data (used by function tools / tests)
 yfinance>=0.2.40

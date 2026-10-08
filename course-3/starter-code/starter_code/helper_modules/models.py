@@ -18,6 +18,7 @@ from llama_index.llms.openai_like import OpenAILike
 
 load_dotenv()
 load_dotenv(Path(__file__).resolve().parents[3] / ".env")  # course-3/.env for local runs
+os.environ.setdefault("LITELLM_LOG", "ERROR")  # DSPy's LiteLLM otherwise logs every call at INFO
 
 CONFIG = tomllib.loads((Path(__file__).resolve().parent.parent / "config.toml").read_text())
 TOKEN_COUNTER = TokenCountingHandler()  # cumulative LlamaIndex LLM + embedding tokens

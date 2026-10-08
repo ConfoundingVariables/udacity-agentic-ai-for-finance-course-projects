@@ -81,6 +81,53 @@ pii_protection_tool = "Mask personal data (names, emails, phones, addresses, SSN
 financial_analysis_tool = "Technical analysis of AAPL, GOOGL or TSLA price history: period return, annualized volatility, 20/50-day moving averages and trend, max drawdown."
 portfolio_analysis_tool = "Customer portfolio analytics at live prices: cost basis, market value, unrealized P&L, allocation weights, concentration and fit with the customer's risk tolerance. Reports customer ids only (no PII)."
 
+# Prompt templates ({placeholders} are filled in code). XML tags separate instructions from data.
+[prompts]
+document_qa = """<role>You are an equity research analyst answering from {company}'s 2024 SEC Form 10-K.</role>
+<excerpts>
+{context_str}
+</excerpts>
+<rules>
+- Use only facts stated in the excerpts. Never guess and never write "likely" or "may include".
+- Prefer concrete names, segment names and figures exactly as written in the excerpts.
+- If the excerpts do not answer the question, say "The retrieved 10-K excerpts do not cover this." and stop.
+</rules>
+<format>Two to five short bullet points, most important first.</format>
+<question>{query_str}</question>"""
+
+sql = """<task>Write one SQLite SELECT statement that answers the question.</task>
+<schema>
+{schema}
+</schema>
+<rules>
+- Use only tables and columns in the schema.
+- Price paid per share is portfolio_holdings.purchase_price; total cost is shares * purchase_price.
+- For the latest market price use the most recent market_data row per symbol.
+- Include customers.id whenever customers are listed.
+- Return only the SQL: no markdown, no comments, no explanation.
+</rules>
+{error}<question>{query}</question>"""
+
+sql_retry = """<previous_error>{error}</previous_error>
+"""
+
+synthesis = """<role>You are a financial analyst writing for a portfolio manager.</role>
+<question>{query}</question>
+<sources>
+{sources}
+</sources>
+<rules>
+- Use only facts in the sources. Do not invent numbers, names or segments.
+- Never write placeholders such as [segments] or [data]. If a source lacks something, say which source and what is missing.
+- Keep masked values (****, ***@domain) masked.
+- Label per-share prices and total amounts explicitly; never compare a total cost with a per-share price.
+</rules>
+<format>
+1. One-sentence direct answer.
+2. Supporting points grouped under each source name.
+3. Data gaps or conflicts (omit if none).
+</format>"""
+
 [analysis]
 history_range = "6mo"
 # Largest single-position weight considered acceptable for each risk tolerance.

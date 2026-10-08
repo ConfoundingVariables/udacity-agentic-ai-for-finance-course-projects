@@ -1,0 +1,87 @@
+# Agent configuration: models, providers, prompts, tool descriptions and analysis thresholds.
+# Edit here instead of in code.
+
+[models]
+# Providers are tried in order; the first whose key is set and answers a 1-token probe is used.
+provider_order = ["vocareum", "openrouter"]
+temperature = 0
+context_window = 16385
+# Chunks per embedding request; mistral-embed caps a request at ~16k tokens (12 x 1024-token chunks fits).
+embed_batch_size = 12
+# Concurrent embedding requests per document while building an index.
+embed_workers = 8
+
+[providers.vocareum]
+api_base_env = "OPENAI_API_BASE"
+default_api_base = "https://openai.vocareum.com/v1"
+api_key_env = "OPENAI_API_KEY"
+llm = "gpt-3.5-turbo"
+embedding = "text-embedding-ada-002"
+
+[providers.openrouter]
+default_api_base = "https://openrouter.ai/api/v1"
+api_key_env = "OPENROUTER_API_KEY"
+llm = "openai/gpt-3.5-turbo"
+# openai/text-embedding-ada-002 needs a valid OpenAI BYOK key on the OpenRouter account
+embedding = "mistralai/mistral-embed-2312"
+
+# USD per 1M tokens, used for cost estimates in monitoring.
+[pricing]
+llm_input = 0.50
+llm_output = 1.50
+embedding = 0.10
+
+[documents]
+chunk_size = 1024
+chunk_overlap = 100
+similarity_top_k = 3
+
+[routing]
+guidelines = """
+- Customers, portfolios, holdings, accounts, investment profiles -> database_query_tool
+- Current/real-time stock price, change, trading volume -> finance_market_search_tool
+- A company's business, products, segments, risk factors or revenue from its 10-K -> that company's *_10k_filing_tool
+- Trend, volatility, returns, moving averages, drawdown of a stock -> financial_analysis_tool
+- Profit/loss, allocation, concentration or risk fit of customer portfolios -> portfolio_analysis_tool
+- Questions spanning several of these need several tools.
+"""
+# Below this routing confidence the coordinator flags the answer as low confidence.
+low_confidence_threshold = 0.6
+
+# Few-shot examples shown to the router (and the seed set for DSPy optimization).
+[[routing.examples]]
+query = "What does Tesla say about competition in its annual report?"
+tools = ["TSLA_10k_filing_tool"]
+
+[[routing.examples]]
+query = "Which customers have an aggressive investment profile?"
+tools = ["database_query_tool"]
+
+[[routing.examples]]
+query = "How is Google stock trading right now?"
+tools = ["finance_market_search_tool"]
+
+[[routing.examples]]
+query = "How volatile has Apple stock been recently?"
+tools = ["financial_analysis_tool"]
+
+[[routing.examples]]
+query = "Which customers are sitting on losses and is anyone over-concentrated?"
+tools = ["portfolio_analysis_tool"]
+
+[[routing.examples]]
+query = "Summarize Apple's main risks and show its current share price"
+tools = ["AAPL_10k_filing_tool", "finance_market_search_tool"]
+
+[tools]
+document = "Answers questions about {name} ({symbol}) from its 2024 SEC 10-K filing: business segments, products, revenue drivers, risk factors, competition and financial disclosures."
+database_query_tool = "Query the customer and portfolio database in natural language: customers, holdings, account balances, investment profiles, company records."
+finance_market_search_tool = "Real-time stock price, change and trading volume for Apple (AAPL), Google (GOOGL) and Tesla (TSLA) from Yahoo Finance."
+pii_protection_tool = "Mask personal data (names, emails, phones, addresses, SSNs) in database results."
+financial_analysis_tool = "Technical analysis of AAPL, GOOGL or TSLA price history: period return, annualized volatility, 20/50-day moving averages and trend, max drawdown."
+portfolio_analysis_tool = "Customer portfolio analytics at live prices: cost basis, market value, unrealized P&L, allocation weights, concentration and fit with the customer's risk tolerance. Reports customer ids only (no PII)."
+
+[analysis]
+history_range = "6mo"
+# Largest single-position weight considered acceptable for each risk tolerance.
+max_position_weight = { low = 0.40, medium = 0.60, high = 0.85 }

@@ -5,19 +5,16 @@ Each company's 10-K PDF is loaded, chunked, embedded into a VectorStoreIndex,
 and exposed as a QueryEngineTool named {SYMBOL}_10k_filing_tool.
 """
 
-import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from dotenv import load_dotenv
-from llama_index.core import Settings, SimpleDirectoryReader, VectorStoreIndex
+from llama_index.core import SimpleDirectoryReader, StorageContext, VectorStoreIndex, load_index_from_storage
 from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.tools import QueryEngineTool
-from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.llms.openai import OpenAI
 
-load_dotenv()
-load_dotenv(Path(__file__).resolve().parents[3] / ".env")  # course-3/.env for local runs
+from .models import CONFIG, active_provider, configure_models
 
+INDEX_DIR = Path(__file__).resolve().parent.parent / "runtime" / "indexes"  # cached per embedding model
 COMPANY_NAMES = {"AAPL": "Apple Inc.", "GOOGL": "Alphabet Inc. (Google)", "TSLA": "Tesla Inc."}
 
 
@@ -33,36 +30,39 @@ class DocumentToolsManager:
         self._configure_settings()
 
     def _configure_settings(self):
-        """Point LlamaIndex at Vocareum's OpenAI-compatible endpoint via api_base."""
-        base_url = os.getenv("OPENAI_API_BASE", "https://openai.vocareum.com/v1")
-        Settings.llm = OpenAI(model="gpt-3.5-turbo", temperature=0, api_base=base_url)
-        Settings.embed_model = OpenAIEmbedding(model="text-embedding-ada-002", api_base=base_url)
+        """gpt-3.5-turbo + text-embedding-ada-002 via the active provider's api_base (see models.py)."""
+        configure_models()
+
+    def _index(self, symbol: str) -> VectorStoreIndex:
+        """Load the company's index from disk, or build it (embedding batches concurrently) and save it."""
+        cache = INDEX_DIR / f"{symbol}_{active_provider().embedding.replace('/', '_')}"
+        if cache.exists():
+            return load_index_from_storage(StorageContext.from_defaults(persist_dir=str(cache)))  # type: ignore[return-value]
+        cfg = CONFIG["documents"]
+        docs = SimpleDirectoryReader(input_files=[str(self.documents_dir / f"{symbol}_10K_2024.pdf")]).load_data()
+        for doc in docs:
+            doc.metadata.update({"symbol": symbol, "company": COMPANY_NAMES[symbol], "document_type": "10-K"})
+        splitter = SentenceSplitter(chunk_size=cfg["chunk_size"], chunk_overlap=cfg["chunk_overlap"])
+        nodes = splitter.get_nodes_from_documents(docs)
+        index = VectorStoreIndex(nodes, use_async=True)
+        index.storage_context.persist(persist_dir=str(cache))
+        return index
+
+    def _tool(self, symbol: str) -> QueryEngineTool | None:
+        try:
+            tool = QueryEngineTool.from_defaults(
+                query_engine=self._index(symbol).as_query_engine(similarity_top_k=CONFIG["documents"]["similarity_top_k"]),
+                name=f"{symbol}_10k_filing_tool",
+                description=CONFIG["tools"]["document"].format(name=COMPANY_NAMES[symbol], symbol=symbol),
+            )
+            if self.verbose:
+                print(f"   ✅ {symbol}_10k_filing_tool ready")
+            return tool
+        except Exception as e:  # missing PDF or embedding/API failure: skip this company
+            print(f"   ❌ Could not build {symbol} tool: {e}")
 
     def build_document_tools(self) -> list[QueryEngineTool]:
-        """Load, chunk and index each 10-K PDF; return one QueryEngineTool per company."""
-        splitter = SentenceSplitter(chunk_size=1024, chunk_overlap=100)
-        self.document_tools = []
-        for symbol in self.companies:
-            name = COMPANY_NAMES[symbol]
-            pdf = self.documents_dir / f"{symbol}_10K_2024.pdf"
-            try:
-                docs = SimpleDirectoryReader(input_files=[str(pdf)]).load_data()
-                for doc in docs:
-                    doc.metadata.update({"symbol": symbol, "company": name, "document_type": "10-K"})
-                index = VectorStoreIndex(splitter.get_nodes_from_documents(docs))
-                self.document_tools.append(
-                    QueryEngineTool.from_defaults(
-                        query_engine=index.as_query_engine(similarity_top_k=3),
-                        name=f"{symbol}_10k_filing_tool",
-                        description=(
-                            f"Answers questions about {name} ({symbol}) from its 2024 SEC 10-K "
-                            "filing: business segments, products, revenue drivers, risk factors, "
-                            "competition and financial disclosures."
-                        ),
-                    )
-                )
-                if self.verbose:
-                    print(f"   ✅ {symbol}_10k_filing_tool built")
-            except Exception as e:  # missing PDF or embedding/API failure: skip this company
-                print(f"   ❌ Could not build {symbol} tool: {e}")
+        """One QueryEngineTool per company; the companies are indexed in parallel threads."""
+        with ThreadPoolExecutor() as pool:
+            self.document_tools = [t for t in pool.map(self._tool, self.companies) if t]
         return self.document_tools

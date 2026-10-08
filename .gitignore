@@ -32,3 +32,6 @@ audit.jsonl
 # Local agent tooling and preferences
 /pstack/
 AGENTS.md
+
+# Course-3 runtime artifacts (metrics, router feedback, compiled router)
+course-3/starter-code/starter_code/runtime/

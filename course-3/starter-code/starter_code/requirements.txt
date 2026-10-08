@@ -20,3 +20,7 @@ nbconvert>=7.0.0
 ipykernel>=6.0.0
 
 # Note: sqlite3 is built into Python, no additional installation needed
+
+# Extras: DSPy router (feedback loop) and OpenAI-compatible providers (OpenRouter)
+dspy>=3.0
+llama-index-llms-openai-like>=0.4

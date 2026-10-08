@@ -4,23 +4,21 @@ Function Tools Module - database, market data and PII protection tools.
 1. database_query_tool        natural language -> SQL -> SQLite rows (+ COLUMNS line)
 2. finance_market_search_tool live quotes from Yahoo Finance, falling back to stored prices
 3. pii_protection_tool        masks emails, phones, names, addresses and SSNs
+4. financial_analysis_tool    period return, volatility, 20/50-day SMAs, trend, max drawdown
+5. portfolio_analysis_tool    cost basis, market value, unrealized P&L, weights, concentration (no PII)
 """
 
 import ast
-import os
+import math
 import re
 import sqlite3
+import statistics
 from pathlib import Path
 
 import requests
-from dotenv import load_dotenv
-from llama_index.core import Settings
 from llama_index.core.tools import FunctionTool
-from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.llms.openai import OpenAI
 
-load_dotenv()
-load_dotenv(Path(__file__).resolve().parents[3] / ".env")  # course-3/.env for local runs
+from .models import CONFIG, configure_models
 
 SYMBOLS = {"apple": "AAPL", "aapl": "AAPL", "tesla": "TSLA", "tsla": "TSLA",
            "google": "GOOGL", "googl": "GOOGL", "alphabet": "GOOGL"}
@@ -74,15 +72,24 @@ class FunctionToolsManager:
         self._configure_settings()
 
     def _configure_settings(self):
-        """LLM for SQL generation, using Vocareum's api_base."""
-        base_url = os.getenv("OPENAI_API_BASE", "https://openai.vocareum.com/v1")
-        self.llm = Settings.llm = OpenAI(model="gpt-3.5-turbo", temperature=0, api_base=base_url)
-        Settings.embed_model = OpenAIEmbedding(model="text-embedding-ada-002", api_base=base_url)
+        """gpt-3.5-turbo via the active provider's api_base (Vocareum, else OpenRouter; see models.py)."""
+        self.llm = configure_models()
 
     def _run_sql(self, sql: str, params: tuple = ()) -> tuple[list[str], list[tuple]]:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(sql, params)
             return [d[0] for d in cursor.description or []], cursor.fetchall()
+
+    def _fetch_chart(self, symbol: str) -> dict:
+        """Fetch Yahoo Finance chart JSON for `symbol` over the configured history range; raises on error."""
+        resp = requests.get(
+            f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
+            params={"range": CONFIG["analysis"]["history_range"], "interval": "1d"},
+            headers={"User-Agent": "Mozilla/5.0"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return resp.json()["chart"]["result"][0]
 
     def database_query_tool(self, query: str) -> str:
         """Answer a natural-language question about customers, holdings or companies via SQL.
@@ -109,10 +116,7 @@ class FunctionToolsManager:
     def _quote(self, symbol: str) -> str:
         """One formatted quote line; stored DB price if Yahoo is down or rate-limited."""
         try:
-            resp = requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
-                                headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
-            resp.raise_for_status()
-            m = resp.json()["chart"]["result"][0]["meta"]
+            m = self._fetch_chart(symbol)["meta"]
             price, prev = m["regularMarketPrice"], m["chartPreviousClose"]
             change = price - prev
             return (f"{symbol}: ${price:,.2f} | Change: {change:+.2f} ({change / prev * 100:+.2f}%)"
@@ -156,19 +160,141 @@ class FunctionToolsManager:
         notice = f"\n\n🔒 PII Protection Applied — masked fields: {sorted(masked)}" if masked else ""
         return "\n".join(lines) + notice
 
+    def financial_analysis_tool(self, query: str) -> str:
+        """Period return, annualized volatility, 20/50-day SMAs, trend and max drawdown for queried symbols."""
+        symbols = dict.fromkeys(s for k, s in SYMBOLS.items() if k in query.lower()) or ["AAPL", "GOOGL", "TSLA"]
+        lines = ["Financial Analysis:"]
+        for sym in symbols:
+            try:
+                result = self._fetch_chart(sym)
+                raw = result["indicators"]["quote"][0]["close"]
+                closes = [c for c in raw if c is not None]
+                source = f"Yahoo Finance ({CONFIG['analysis']['history_range']})"
+            except Exception:
+                _, rows = self._run_sql(
+                    "SELECT close_price FROM market_data WHERE symbol=? ORDER BY date", (sym,))
+                closes = [r[0] for r in rows]
+                source = "database"
+            if len(closes) < 2:
+                lines.append(f"\n{sym}: insufficient price data")
+                continue
+            period_ret = (closes[-1] - closes[0]) / closes[0] * 100
+            daily = [(closes[i] - closes[i - 1]) / closes[i - 1] for i in range(1, len(closes))]
+            vol = statistics.stdev(daily) * math.sqrt(252) * 100
+            sma20 = statistics.mean(closes[-20:]) if len(closes) >= 20 else None
+            sma50 = statistics.mean(closes[-50:]) if len(closes) >= 50 else None
+            price = closes[-1]
+            sma_str = " | ".join(
+                f"{lbl}={val:,.2f}" for lbl, val in (("SMA20", sma20), ("SMA50", sma50)) if val is not None
+            ) or "SMAs: n/a"
+            trend = ", ".join(
+                ("above" if price > val else "below") + f" {lbl}"
+                for lbl, val in (("SMA20", sma20), ("SMA50", sma50)) if val is not None
+            ) or "n/a"
+            peak, max_dd = closes[0], 0.0
+            for c in closes:
+                peak = max(peak, c)
+                max_dd = min(max_dd, (c - peak) / peak * 100)
+            lines.append(
+                f"\n{sym} [{source}]:\n"
+                f"  Period Return: {period_ret:+.2f}%\n"
+                f"  Annualized Volatility: {vol:.2f}%\n"
+                f"  {sma_str}\n"
+                f"  Trend: {trend}\n"
+                f"  Max Drawdown: {max_dd:.2f}%"
+            )
+        return "\n".join(lines)
+
+    def portfolio_analysis_tool(self, query: str) -> str:
+        """Holdings analysis at live prices: cost basis, market value, P&L, weights, concentration. No PII."""
+        m = re.search(r"(?:customer|client|id)\s*#?\s*(\d+)", query, re.I)
+        cid = int(m.group(1)) if m else None
+        sql = "SELECT id, investment_profile, risk_tolerance FROM customers" + (" WHERE id=?" if cid else "")
+        _, customers = self._run_sql(sql, (cid,) if cid else ())
+        if not customers:
+            return "No customers found."
+
+        _price_cache: dict[str, tuple] = {}
+
+        def _live(sym: str) -> tuple:
+            if sym not in _price_cache:
+                try:
+                    _price_cache[sym] = (self._fetch_chart(sym)["meta"]["regularMarketPrice"], "Yahoo Finance")
+                except Exception:
+                    _, rows = self._run_sql(
+                        "SELECT close_price, date FROM market_data WHERE symbol=? ORDER BY date DESC LIMIT 1",
+                        (sym,))
+                    _price_cache[sym] = (rows[0][0], f"DB {rows[0][1]}") if rows else (None, "unavailable")
+            return _price_cache[sym]
+
+        max_wts = CONFIG["analysis"]["max_position_weight"]
+        lines = ["Portfolio Analysis:"]
+        for customer_id, inv_profile, risk_tol in customers:
+            _, holdings = self._run_sql(
+                "SELECT symbol, shares, purchase_price FROM portfolio_holdings WHERE customer_id=?",
+                (customer_id,))
+            if not holdings:
+                lines.append(f"\nCustomer {customer_id} ({inv_profile}, {risk_tol} risk): no holdings")
+                continue
+            rows_data = []
+            total_cost = total_value = 0.0
+            for sym, shares, pp in holdings:
+                cost = shares * pp
+                price, src = _live(sym)
+                if price is None:
+                    rows_data.append((sym, shares, cost, None, None, None, src))
+                    total_cost += cost
+                    continue
+                value = shares * price
+                pnl = value - cost
+                rows_data.append((sym, shares, cost, value, pnl, pnl / cost * 100 if cost else 0.0, src))
+                total_cost += cost
+                total_value += value
+
+            max_wt = max_wts.get(risk_tol, 1.0)
+            detail: list[str] = []
+            alerts: list[str] = []
+            for sym, shares, cost, value, pnl, pnl_pct, src in rows_data:
+                if value is None:
+                    detail.append(f"  {sym}: {shares:.2f} shares | Cost ${cost:,.2f} | Value N/A ({src})")
+                    continue
+                wt = value / total_value if total_value else 0.0
+                if wt > max_wt:
+                    alerts.append(
+                        f"  ALERT: {sym} {wt:.0%} of portfolio — over-concentrated"
+                        f" for {risk_tol} risk tolerance (max {max_wt:.0%})")
+                detail.append(
+                    f"  {sym}: {shares:.2f} sh | Cost ${cost:,.2f} | Value ${value:,.2f} ({src})"
+                    f" | P&L {pnl:+,.2f} ({pnl_pct:+.2f}%) | Weight {wt:.1%}")
+
+            total_pnl = total_value - total_cost
+            total_pnl_pct = total_pnl / total_cost * 100 if total_cost else 0.0
+            lines.append(
+                f"\nCustomer {customer_id} ({inv_profile}, {risk_tol} risk):\n"
+                + "\n".join(detail)
+                + f"\n  TOTAL: Cost ${total_cost:,.2f} | Value ${total_value:,.2f}"
+                  f" | P&L {total_pnl:+,.2f} ({total_pnl_pct:+.2f}%)")
+            lines.extend(alerts)
+        return "\n".join(lines)
+
     def create_function_tools(self) -> list[FunctionTool]:
-        """Wrap the three tool methods as LlamaIndex FunctionTools."""
+        """Wrap the five tool methods as LlamaIndex FunctionTools."""
+        t = CONFIG["tools"]
         self.function_tools = [
             FunctionTool.from_defaults(
                 fn=self.database_query_tool, name="database_query_tool",
-                description="Query the customer and portfolio database in natural language: customers, "
-                            "holdings, account balances, investment profiles, company records."),
+                description=t["database_query_tool"]),
             FunctionTool.from_defaults(
                 fn=self.finance_market_search_tool, name="finance_market_search_tool",
-                description="Real-time stock price, change and trading volume for Apple (AAPL), "
-                            "Google (GOOGL) and Tesla (TSLA) from Yahoo Finance."),
+                description=t["finance_market_search_tool"]),
             FunctionTool.from_defaults(
                 fn=self.pii_protection_tool, name="pii_protection_tool",
-                description="Mask personal data (names, emails, phones, addresses, SSNs) in database results."),
+                description=t["pii_protection_tool"]),
+            FunctionTool.from_defaults(
+                fn=self.financial_analysis_tool, name="financial_analysis_tool",
+                description=t["financial_analysis_tool"]),
+            FunctionTool.from_defaults(
+                fn=self.portfolio_analysis_tool, name="portfolio_analysis_tool",
+                description=t["portfolio_analysis_tool"]),
         ]
         return self.function_tools

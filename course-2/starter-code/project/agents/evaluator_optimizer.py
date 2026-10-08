@@ -203,31 +203,103 @@ class EvaluatorOptimizerPattern:
 
         for i, message in enumerate(messages):
             print(f"\nProcessing message {i+1}/{len(messages)}: {message.get('message_id', 'Unknown')}")
+            validation_history = []
+            correction_history = []
 
             # Iterative evaluation and optimization
             for iteration in range(self.MAX_ITERATIONS):
                 is_valid, errors = self.evaluate_message(message)
+                iteration_number = iteration + 1
 
                 if is_valid:
                     print(f"  ✓ Message valid after {iteration} iteration(s)")
                     message['validation_status'] = 'VALID'
                     message['validation_errors'] = []
+                    validation_history.append({
+                        "iteration": iteration_number,
+                        "status": "VALID",
+                        "errors": [],
+                        "correction_attempted": False,
+                    })
                     break
-                else:
-                    print(f"  Iteration {iteration + 1}: Found {len(errors)} error(s)")
-                    for error in errors[:3]:  # Show first 3 errors
-                        print(f"    - {error}")
 
-                    if iteration < self.MAX_ITERATIONS - 1:
-                        # Attempt to optimize
-                        print(f"  Attempting optimization...")
-                        message = self.optimize_message(message, errors)
+                print(f"  Iteration {iteration_number}: Found {len(errors)} error(s)")
+                for error in errors[:3]:  # Show first 3 errors
+                    print(f"    - {error}")
+
+                if iteration < self.MAX_ITERATIONS - 1:
+                    # Attempt to optimize, retaining field-level evidence only.
+                    print("  Attempting optimization...")
+                    before = dict(message)
+                    corrected = self.optimize_message(message, errors)
+                    raw_changed_fields = sorted(
+                        field for field in set(before) | set(corrected)
+                        if before.get(field) != corrected.get(field)
+                    )
+                    call_evidence = dict(
+                        getattr(self.correction_agent, "last_call_evidence", {})
+                    )
+                    provider_available = bool(call_evidence.get("provider_available"))
+                    call_attempted = bool(call_evidence.get("call_attempted"))
+                    response_received = bool(call_evidence.get("response_received"))
+                    parsed_result = bool(call_evidence.get("parsed_result"))
+                    # Required-field preservation by optimize_message is not a
+                    # correction. Count changed fields only for a parsed model
+                    # response, never for the offline no-op path.
+                    changed_fields = raw_changed_fields if parsed_result else []
+                    if changed_fields:
+                        correction_status = "applied"
+                    elif not provider_available:
+                        correction_status = "offline_noop"
+                    elif not call_attempted or not response_received:
+                        correction_status = "call_failed"
+                    elif not parsed_result:
+                        correction_status = "invalid_response"
                     else:
-                        # Max iterations reached
-                        print(f"  ✗ Max iterations reached. Message still has errors.")
-                        message['validation_status'] = 'INVALID'
-                        message['validation_errors'] = errors
+                        correction_status = "no_change"
+                    correction_record = {
+                        "iteration": iteration_number,
+                        "errors": list(errors),
+                        "provider_available": provider_available,
+                        "call_attempted": call_attempted,
+                        "response_received": response_received,
+                        "parsed_result": parsed_result,
+                        "attempted": True,
+                        "status": correction_status,
+                        "changed_fields": changed_fields,
+                    }
+                    correction_history.append(correction_record)
+                    validation_history.append({
+                        "iteration": iteration_number,
+                        "status": "INVALID",
+                        "errors": list(errors),
+                        "correction_attempted": True,
+                        "correction_status": correction_status,
+                        "changed_fields": changed_fields,
+                    })
+                    message = corrected
+                else:
+                    # Max iterations reached
+                    print("  ✗ Max iterations reached. Message still has errors.")
+                    message['validation_status'] = 'INVALID'
+                    message['validation_errors'] = errors
+                    validation_history.append({
+                        "iteration": iteration_number,
+                        "status": "INVALID",
+                        "errors": list(errors),
+                        "correction_attempted": False,
+                    })
 
+            message['validation_history'] = validation_history
+            message['correction_evidence'] = {
+                "attempted": bool(correction_history),
+                "applied": any(r["status"] == "applied" for r in correction_history),
+                "attempt_count": len(correction_history),
+                "live_model_call_count": sum(
+                    1 for r in correction_history if r["call_attempted"]
+                ),
+                "iterations": correction_history,
+            }
             optimized_messages.append(message)
 
         # Print summary

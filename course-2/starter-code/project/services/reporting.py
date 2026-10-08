@@ -73,10 +73,14 @@ class ReportGenerator:
                 "amount": m.get('amount'),
                 "currency": m.get('currency'),
                 "validation_status": m.get('validation_status'),
+                "validation_errors": m.get('validation_errors', []),
+                "validation_history": m.get('validation_history', []),
+                "correction_evidence": m.get('correction_evidence', {}),
                 "fraud_status": m.get('fraud_status'),
                 "fraud_score": m.get('fraud_score'),
                 "fraud_decision": m.get('fraud_decision'),
                 "fraud_reasons": m.get('fraud_reasons', []),
+                "fraud_analysis": m.get('fraud_analysis', []),
             }
             for m in messages
         ]
@@ -88,11 +92,18 @@ class ReportGenerator:
 
         orchestrator_summaries = []
         for os_set in (orchestrator_sets or []):
+            result = os_set.get('result') or {}
+            plan = result.get('orchestrator_analysis') or {}
+            groups = plan.get('groups', [])
+            group_results = result.get('group_results', [])
             orchestrator_summaries.append({
                 "filter": os_set.get('filter'),
                 "message_count": os_set.get('message_count'),
-                "summary": (os_set.get('result') or {}).get('summary'),
-                "task_count": len((os_set.get('result') or {}).get('task_results', [])),
+                "grouping_dimension": plan.get('grouping_dimension'),
+                "groups": groups,
+                "group_results": group_results,
+                "group_count": len(groups),
+                "summary": result.get('summary'),
             })
 
         return {
@@ -100,6 +111,7 @@ class ReportGenerator:
             "generated_at": datetime.now().isoformat(),
             "metrics": metrics,
             "prompt_chain_summary": chain_summary,
+            "chain_results": chain_results or {},
             "orchestrator_sets": orchestrator_summaries,
             "transactions": per_message,
         }
@@ -151,7 +163,8 @@ class ReportGenerator:
             for s in report["orchestrator_sets"]:
                 lines.append(
                     f"[{s['filter']}] {s['message_count']} msgs, "
-                    f"{s['task_count']} tasks -> {s['summary']}"
+                    f"dimension={s['grouping_dimension']} "
+                    f"{s['group_count']} groups -> {s['summary']}"
                 )
             lines.append("")
 

@@ -60,6 +60,12 @@ class SwiftCorrectionAgent:
     def __init__(self):
         # TODO 7: Define LLMService.
         self.llm_service = LLMService()
+        self.last_call_evidence = {
+            "provider_available": False,
+            "call_attempted": False,
+            "response_received": False,
+            "parsed_result": False,
+        }
 
     def create_prompt(self, message, errors):
         """Create a (system_prompt, user_prompt) pair to correct a SWIFT message."""
@@ -86,8 +92,15 @@ class SwiftCorrectionAgent:
         correction call fails.
         """
         system_prompt, user_prompt = self.create_prompt(message, errors)
+        provider_available = Config.has_api_key()
+        self.last_call_evidence = {
+            "provider_available": provider_available,
+            "call_attempted": False,
+            "response_received": False,
+            "parsed_result": False,
+        }
 
-        if not Config.has_api_key():
+        if not provider_available:
             # Offline: no correction is possible, keep the original message.
             return message
 
@@ -108,11 +121,14 @@ class SwiftCorrectionAgent:
             if llm_client._JSON_MODE_SUPPORTED:
                 request["response_format"] = {"type": "json_object"}
 
+            self.last_call_evidence["call_attempted"] = True
             response = client.chat.completions.create(**request)
+            self.last_call_evidence["response_received"] = True
 
             # TODO 9: Parse the JSON content from the response.
             content = response.choices[0].message.content
             result = llm_client._parse_json_content(content or "{}")
+            self.last_call_evidence["parsed_result"] = bool(result)
             return result or message
 
         except Exception as e:
@@ -362,7 +378,7 @@ class FraudAggAgent:
         self.threshold = 0.5  # Fraud threshold (50%)
 
     def aggregate_results(self, fraud_results):
-        """Aggregate fraud detection results from multiple agents."""
+        """Aggregate fraud detection results using the strongest signal."""
         if not fraud_results:
             return {
                 "is_fraudulent": False,
@@ -371,21 +387,17 @@ class FraudAggAgent:
                 "aggregated_reasons": [],
             }
 
-        total_risk = sum(r.get('risk_score', 0) for r in fraud_results)
-        avg_risk = total_risk / len(fraud_results)
-
+        peak_risk = max(r.get("risk_score", 0) for r in fraud_results)
         all_reasons = []
         for result in fraud_results:
-            agent_name = result.get('agent', 'Unknown')
-            for reason in result.get('fraud_reasons', []):
+            agent_name = result.get("agent", "Unknown")
+            for reason in result.get("fraud_reasons", []) or []:
                 all_reasons.append(f"[{agent_name}] {reason}")
 
-        is_fraudulent = avg_risk >= self.threshold
-
         return {
-            "is_fraudulent": is_fraudulent,
-            "confidence": round(avg_risk * 100, 2),
-            "total_risk_score": round(avg_risk, 3),
+            "is_fraudulent": peak_risk >= self.threshold,
+            "confidence": round(peak_risk * 100, 2),
+            "total_risk_score": round(peak_risk, 3),
             "aggregated_reasons": all_reasons,
         }
 

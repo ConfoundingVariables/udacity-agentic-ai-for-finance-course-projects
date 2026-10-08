@@ -1,65 +1,90 @@
-"""Unit tests for the orchestrator-worker pattern (offline)."""
+"""Unit tests for the named batch orchestrator (offline)."""
 
 from agents.orchestrator_worker import OrchestratorWorkerPattern
 
 
 SAMPLE = [
-    {'message_id': 'M1', 'amount': '60000.00 USD',
-     'sender_bic': 'CHASUS33XXX', 'receiver_bic': 'DEUTDEFFXXX'},
-    {'message_id': 'M2', 'amount': '900.00 USD',
-     'sender_bic': 'BNPAFRPPXXX', 'receiver_bic': 'BARCGB22XXX'},
+    {"message_id": "M1", "amount": "60000.00 USD", "message_type": "MT103"},
+    {"message_id": "M2", "amount": "900.00 EUR", "message_type": "MT202"},
+    {"message_id": "M3", "currency": "USD", "amount": "12.00", "message_type": "MT103"},
 ]
 
 
-def test_default_plan_offline():
-    orch = OrchestratorWorkerPattern.Orchestrator()
-    plan = orch.analyze_and_create_tasks(SAMPLE)
-    assert plan['task_count'] == 4
-    types = {t['type'] for t in plan['tasks']}
-    assert {'compliance_check', 'amount_verification',
-            'pattern_detection', 'summary_report'} <= types
-    # The high-value (> $50k) message should be captured in the amount task.
-    amount_task = next(t for t in plan['tasks'] if t['type'] == 'amount_verification')
-    assert 'M1' in amount_task['data']['high_value_ids']
-    assert 'M2' not in amount_task['data']['high_value_ids']
+def test_offline_plan_is_named_currency_partition():
+    plan = OrchestratorWorkerPattern.Orchestrator().create_grouping_plan(SAMPLE)
+    assert set(plan) == {"analysis", "grouping_dimension", "groups"}
+    assert plan["grouping_dimension"] == "currency"
+    assert {group["name"] for group in plan["groups"]} == {"USD transactions", "EUR transactions"}
+    grouped_ids = [message_id for group in plan["groups"] for message_id in group["message_ids"]]
+    assert grouped_ids == ["M1", "M3", "M2"]
+    assert len(grouped_ids) == len(set(grouped_ids)) == len(SAMPLE)
 
 
-def test_worker_capability_routing():
-    p = OrchestratorWorkerPattern()
-    workers = p._build_worker_pool()
-    routes = {
-        'compliance_check': 'compliance-worker',
-        'fraud_analysis': 'fraud-worker',
-        'pattern_detection': 'fraud-worker',
-        'amount_verification': 'finance-worker',
-        'summary_report': 'reporting-worker',
-        'something_unknown': 'generalist-worker',
+def test_duplicate_message_ids_are_rejected():
+    try:
+        OrchestratorWorkerPattern.Orchestrator().create_grouping_plan([
+            {"message_id": "M1", "amount": "1 USD"},
+            {"message_id": "M1", "amount": "2 USD"},
+        ])
+    except ValueError as error:
+        assert "unique" in str(error)
+    else:
+        raise AssertionError("duplicate message IDs must be rejected")
+
+
+def test_model_plan_invalid_partition_uses_currency_fallback(monkeypatch):
+    raw = {
+        "analysis": "Invalid partition",
+        "grouping_dimension": "message_type",
+        "groups": [{"group_id": "a", "name": "First", "message_ids": ["M1", "M1"]}],
     }
-    for task_type, expected in routes.items():
-        worker = p._assign_worker({'type': task_type}, workers)
-        assert worker.name == expected, f"{task_type} -> {worker.name}"
+    monkeypatch.setattr(
+        "agents.orchestrator_worker.llm_client.chat_json",
+        lambda *args, **kwargs: raw,
+    )
+    plan = OrchestratorWorkerPattern.Orchestrator().create_grouping_plan(SAMPLE)
+    assert plan["grouping_dimension"] == "currency"
+    grouped_ids = [message_id for group in plan["groups"] for message_id in group["message_ids"]]
+    assert grouped_ids == ["M1", "M3", "M2"]
 
 
-def test_generic_agent_execute_offline():
-    agent = OrchestratorWorkerPattern.GenericAgent("compliance-worker",
-                                                   ["compliance_check"])
-    result = agent.execute_task({
-        'task_id': 't1', 'type': 'compliance_check',
-        'description': 'Screen BICs', 'data': {'x': 1},
+def test_worker_routing_uses_grouping_dimension():
+    pattern = OrchestratorWorkerPattern()
+    workers = pattern._build_worker_pool()
+    assert pattern._assign_worker({"grouping_dimension": "currency"}, workers).name == "finance-worker"
+    assert pattern._assign_worker({"grouping_dimension": "risk_profile"}, workers).name == "fraud-worker"
+    assert pattern._assign_worker({"grouping_dimension": "unfamiliar_dimension"}, workers).name == "generalist-worker"
+
+
+def test_group_worker_reports_actual_subset_offline():
+    agent = OrchestratorWorkerPattern.GenericAgent("finance-worker", ["currency"])
+    subset = [{"message_id": "M1", "amount": "60000.00 USD", "message_type": "MT103"}]
+    result = agent.process_group({
+        "group_id": "g1",
+        "group_name": "USD transactions",
+        "grouping_dimension": "currency",
+        "message_ids": ["M1"],
+        "messages": subset,
     })
-    assert result['status'] == 'completed'
-    assert result['worker'] == 'compliance-worker'
-    assert result['results']['status'] == 'completed'
+    assert result["status"] == "completed"
+    assert result["messages"] == subset
+    assert result["message_ids"] == ["M1"]
+    assert result["results"]["amount_totals_by_currency"] == {"USD": 60000.0}
+    assert result["results"]["message_type_distribution"] == {"MT103": 1}
+    assert result["results"]["high_value_ids"] == ["M1"]
 
 
-def test_process_with_orchestrator_end_to_end_offline():
-    p = OrchestratorWorkerPattern()
-    out = p.process_with_orchestrator(SAMPLE)
-    assert 'orchestrator_analysis' in out
-    assert out['task_results']
-    assert all(r['status'] == 'completed' for r in out['task_results'])
+def test_process_with_orchestrator_returns_group_results():
+    result = OrchestratorWorkerPattern().process_with_orchestrator(SAMPLE)
+    assert "orchestrator_analysis" in result
+    assert "group_results" in result
+    assert "task_results" not in result
+    assert len(result["group_results"]) == 2
+    assert all(group["status"] == "completed" for group in result["group_results"])
+    assert {message_id for group in result["group_results"] for message_id in group["message_ids"]} == {"M1", "M2", "M3"}
 
 
 def test_process_with_orchestrator_empty():
-    out = OrchestratorWorkerPattern().process_with_orchestrator([])
-    assert out['task_results'] == []
+    result = OrchestratorWorkerPattern().process_with_orchestrator([])
+    assert result["group_results"] == []
+    assert result["orchestrator_analysis"]["groups"] == []

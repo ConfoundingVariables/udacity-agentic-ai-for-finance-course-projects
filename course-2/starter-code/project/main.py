@@ -8,7 +8,7 @@ to process SWIFT messages through a complete pipeline:
     1. Evaluator-Optimizer  -> validate & correct messages
     2. Parallelization      -> concurrent multi-agent fraud screening
     3. Prompt Chaining      -> deep multi-stage fraud investigation
-    4. Orchestrator-Worker  -> delegate final processing to capable workers
+    4. Orchestrator-Worker  -> partition the batch and delegate group reports
 
 It then produces TWO different report sets and computes the STP rate.
 """
@@ -116,7 +116,7 @@ class SWIFTProcessingSystem:
 
     def process_with_orchestrator_worker(self, messages: List[Dict],
                                          filter_name: str = "non_fraudulent") -> Dict:
-        """Step 4: Delegate final processing of a filtered message set.
+        """Step 4: Partition a filtered message set and delegate group reports.
 
         TODO 5 is fulfilled here: the message subset is chosen by a named
         filter, letting ``run()`` produce two distinct report sets from one
@@ -197,6 +197,10 @@ class SWIFTProcessingSystem:
                 subset_report = self.report_generator.generate(
                     report_name=f"{filter_name}_report",
                     messages=subset,
+                    orchestrator_sets=[
+                        report_set for report_set in orchestrator_sets
+                        if report_set["filter"] == filter_name
+                    ],
                 )
                 sm = subset_report["metrics"]
                 print(f"  [{filter_name}] {sm['total_messages']} msgs, "

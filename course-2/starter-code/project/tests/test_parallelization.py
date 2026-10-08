@@ -37,3 +37,14 @@ def test_obviously_fraudulent_message_flagged():
     assert out['fraud_status'] == 'FRAUDULENT'
     assert out['fraud_score'] > 0
     assert out['fraud_reasons']
+
+def test_single_strong_agent_signal_is_not_diluted():
+    out = ParallelizationPattern().process_batch_parallel([{
+        'message_id': 'STRONG01',
+        'amount': '123.45 USD',
+        'sender_bic': 'TESTUS33XXX',
+        'receiver_bic': 'AAAAUS33XXX',
+        'remittance_info': 'urgent transfer',
+    }])[0]
+    assert out['fraud_status'] == 'FRAUDULENT'
+    assert out['fraud_score'] >= 50

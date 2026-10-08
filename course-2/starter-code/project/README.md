@@ -15,7 +15,7 @@ always completes and still produces reports.
 
 ```
 generate → 1. Evaluator-Optimizer → 2. Parallelization → 3. Prompt Chaining → 4. Orchestrator-Worker → reports
-             (validate & correct)     (fraud screening)     (deep investigation)   (task delegation)
+             (validate & correct)     (fraud screening)     (deep investigation)   (named batch groups)
 ```
 
 | Stage | Pattern | Module | Purpose |
@@ -23,11 +23,20 @@ generate → 1. Evaluator-Optimizer → 2. Parallelization → 3. Prompt Chainin
 | 1 | Evaluator-Optimizer | `agents/evaluator_optimizer.py` | Validate each message against SWIFT standards; iteratively correct issues via `SwiftCorrectionAgent`. |
 | 2 | Parallelization | `agents/parallelization.py` | Run four fraud agents concurrently per message and aggregate their verdicts. |
 | 3 | Prompt Chaining | `agents/prompt_chaining.py` | Escalate only *suspicious* messages through a 5-stage investigation chain. |
-| 4 | Orchestrator-Worker | `agents/orchestrator_worker.py` | Decompose the goal into tasks and delegate to capability-scoped workers. |
+| 4 | Orchestrator-Worker | `agents/orchestrator_worker.py` | Choose a grouping dimension, partition every selected message into exactly one named group, and delegate each group report to the worker pool. |
 
 Only suspicious transactions reach stage 3, and each report set is produced from
 a named filter — both are deliberate performance choices that mirror a real
 fraud desk.
+
+The orchestrator returns `analysis`, `grouping_dimension`, and
+`groups: [{group_id, name, message_ids}]`. The model chooses how to organise the
+batch (for example by bank, currency, or message type); workers receive the
+actual messages belonging to their group, not an action list. Without a key,
+`_default_plan` groups by currency, including an unknown-currency bucket.
+The capability-scoped worker pool, concurrent dispatch, and per-group failure
+handling are retained. Reports preserve the grouping plan and `group_results`
+for both the primary batch and the filtered report sets.
 
 ---
 
@@ -39,7 +48,7 @@ Defined in `agents/workflow_agents/base_agents.py`:
 - **FraudPatternDetectionAgent** — BIC and remittance-keyword patterns (TEST/FAKE BICs, same sender/receiver, "urgent"/"secret").
 - **GeographicRiskAgent** — jurisdiction risk from the BIC country code (chars 5-6) plus cross-border corridors.
 - **AIAnomalyDetectionAgent** — *custom AI-driven agent*. Computes a cheap statistical signal (Benford leading-digit rarity, round-number bias, extreme magnitude) and **only escalates borderline cases to the LLM**, blending the heuristic and AI judgement. Falls back to the pure heuristic when offline.
-- **FraudAggAgent** — averages the agents' risk scores and applies the fraud threshold.
+- **FraudAggAgent** — takes the maximum detector risk score and applies the existing 0.5 fraud threshold. Quiet detectors cannot dilute a strong signal. Scores of 30% or more still trigger the investigation chain even below the fraud threshold. These are screening scores, not calibrated fraud probabilities.
 
 ---
 
@@ -94,13 +103,24 @@ the system runs fully offline on deterministic heuristics.
 ./.venv/bin/python process_chat.py --message '{"amount":"9000000.00","currency":"USD","sender_bic":"TESTRU33XXX","receiver_bic":"TESTRU33XXX","remittance_info":"urgent secret transfer"}'
 ./.venv/bin/python process_chat.py --interactive
 
+# Capture deterministic correction, screening, chain and grouping evidence
+./.venv/bin/python capture_feedback_evidence.py
+
 # Tests (hermetic — forced offline, no API calls)
 ./.venv/bin/python -m pytest -q
 ```
 
 Running `main.py` writes three report sets to `reports/`: the full
 `pipeline_report.*` plus one file per requested filter
-(`non_fraudulent_report.*`, `high_value_report.*`).
+( `non_fraudulent_report.*`, `high_value_report.*` ).
+
+`capture_feedback_evidence.py` writes `reports/feedback_evidence.json`. It
+deliberately runs offline: invalid input reaches correction attempts (honest
+no-ops without a model), a suspicious payment reaches all five chain stages,
+and a mixed-currency batch produces an exact grouping partition. Existing
+live-attempt records are retained, not retried or represented as successful
+model work. Successful live correction/investigation evidence requires a
+working configured endpoint and credentials; the captured live attempts failed.
 
 ---
 

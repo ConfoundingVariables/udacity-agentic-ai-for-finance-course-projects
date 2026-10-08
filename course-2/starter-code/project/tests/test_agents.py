@@ -73,17 +73,29 @@ def test_ai_anomaly_agent_offline_heuristic():
     assert small["ai_escalated"] is False
 
 
-def test_aggregator_math_and_threshold():
+def test_aggregator_preserves_strong_signal_against_quiet_agents():
     agg = FraudAggAgent()
-    results = [
-        {"agent": "A", "risk_score": 0.8, "fraud_reasons": ["r1"]},
-        {"agent": "B", "risk_score": 0.4, "fraud_reasons": ["r2"]},
-    ]
-    out = agg.aggregate_results(results)
-    assert out["total_risk_score"] == 0.6
+    out = agg.aggregate_results([
+        {"agent": "strong", "risk_score": 0.9, "fraud_reasons": ["strong signal"]},
+        {"agent": "quiet-a", "risk_score": 0.0, "fraud_reasons": []},
+        {"agent": "quiet-b", "risk_score": 0.1, "fraud_reasons": []},
+    ])
+    assert out["total_risk_score"] == 0.9
+    assert out["confidence"] == 90.0
     assert out["is_fraudulent"] is True
-    assert out["confidence"] == 60.0
-    assert len(out["aggregated_reasons"]) == 2
+
+
+def test_aggregator_applies_peak_threshold():
+    below = FraudAggAgent().aggregate_results([
+        {"agent": "A", "risk_score": 0.49, "fraud_reasons": ["near threshold"]},
+        {"agent": "B", "risk_score": 0.0, "fraud_reasons": []},
+    ])
+    at = FraudAggAgent().aggregate_results([
+        {"agent": "A", "risk_score": 0.5, "fraud_reasons": ["threshold"]},
+        {"agent": "B", "risk_score": 0.0, "fraud_reasons": []},
+    ])
+    assert below["is_fraudulent"] is False
+    assert at["is_fraudulent"] is True
 
 
 def test_aggregator_empty():

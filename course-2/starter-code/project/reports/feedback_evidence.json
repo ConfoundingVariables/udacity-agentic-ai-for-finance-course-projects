@@ -1,0 +1,351 @@
+{
+  "generated_at": "2026-10-08T06:22:35.743721+00:00",
+  "api_available": true,
+  "runner": {
+    "command": ".venv/bin/python capture_feedback_evidence.py",
+    "mode": "offline",
+    "live_attempts_repeated": false,
+    "note": "Existing live-attempt evidence is retained; this command makes no API calls."
+  },
+  "offline": {
+    "correction_input": {
+      "message_id": "CORRECTION001",
+      "message_type": "MT103",
+      "reference": "REFERENCE-TOO-LONG-FOR-SWIFT",
+      "amount": "100.00",
+      "currency": "USD",
+      "sender_bic": "CHASUS33XXX",
+      "receiver_bic": "DEUTDEFFXXX"
+    },
+    "correction_output": {
+      "message_id": "CORRECTION001",
+      "message_type": "MT103",
+      "reference": "REFERENCE-TOO-LONG-FOR-SWIFT",
+      "amount": "100.00",
+      "currency": "USD",
+      "sender_bic": "CHASUS33XXX",
+      "receiver_bic": "DEUTDEFFXXX",
+      "validation_status": "INVALID",
+      "validation_errors": [
+        "Reference too long: 28 chars (max 16)"
+      ],
+      "validation_history": [
+        {
+          "iteration": 1,
+          "status": "INVALID",
+          "errors": [
+            "Reference too long: 28 chars (max 16)"
+          ],
+          "correction_attempted": true,
+          "correction_status": "offline_noop",
+          "changed_fields": []
+        },
+        {
+          "iteration": 2,
+          "status": "INVALID",
+          "errors": [
+            "Reference too long: 28 chars (max 16)"
+          ],
+          "correction_attempted": true,
+          "correction_status": "offline_noop",
+          "changed_fields": []
+        },
+        {
+          "iteration": 3,
+          "status": "INVALID",
+          "errors": [
+            "Reference too long: 28 chars (max 16)"
+          ],
+          "correction_attempted": false
+        }
+      ],
+      "correction_evidence": {
+        "attempted": true,
+        "applied": false,
+        "attempt_count": 2,
+        "live_model_call_count": 0,
+        "iterations": [
+          {
+            "iteration": 1,
+            "errors": [
+              "Reference too long: 28 chars (max 16)"
+            ],
+            "provider_available": false,
+            "call_attempted": false,
+            "response_received": false,
+            "parsed_result": false,
+            "attempted": true,
+            "status": "offline_noop",
+            "changed_fields": []
+          },
+          {
+            "iteration": 2,
+            "errors": [
+              "Reference too long: 28 chars (max 16)"
+            ],
+            "provider_available": false,
+            "call_attempted": false,
+            "response_received": false,
+            "parsed_result": false,
+            "attempted": true,
+            "status": "offline_noop",
+            "changed_fields": []
+          }
+        ]
+      }
+    },
+    "screened_messages": [
+      {
+        "message_id": "CHAIN001",
+        "message_type": "MT103",
+        "reference": "CHAIN001",
+        "amount": "9000000.00",
+        "currency": "USD",
+        "sender_bic": "TESTRU33XXX",
+        "receiver_bic": "TESTRU33XXX",
+        "remittance_info": "urgent secret transfer",
+        "fraud_status": "FRAUDULENT",
+        "fraud_score": 100.0,
+        "fraud_reasons": [
+          "[FraudAmountDetectionAgent] High amount transaction: 9000000.0",
+          "[FraudAmountDetectionAgent] Suspiciously round amount: 9000000.0",
+          "[FraudPatternDetectionAgent] Test/fake pattern detected in BIC: TEST",
+          "[FraudPatternDetectionAgent] Same sender and receiver BIC",
+          "[FraudPatternDetectionAgent] Suspicious keyword in remittance: urgent",
+          "[FraudPatternDetectionAgent] Suspicious keyword in remittance: secret",
+          "[AIAnomalyDetectionAgent] Rare leading digit 9 (Benford p=0.05)",
+          "[AIAnomalyDetectionAgent] Perfectly round amount",
+          "[AIAnomalyDetectionAgent] Very large amount: 9,000,000.00",
+          "[GeographicRiskAgent] High-risk sender jurisdiction: RU",
+          "[GeographicRiskAgent] High-risk receiver jurisdiction: RU"
+        ],
+        "fraud_analysis": [
+          {
+            "agent": "FraudAmountDetectionAgent",
+            "risk_score": 0.5,
+            "fraud_reasons": [
+              "High amount transaction: 9000000.0",
+              "Suspiciously round amount: 9000000.0"
+            ],
+            "message_id": "CHAIN001"
+          },
+          {
+            "agent": "FraudPatternDetectionAgent",
+            "risk_score": 1.0,
+            "fraud_reasons": [
+              "Test/fake pattern detected in BIC: TEST",
+              "Same sender and receiver BIC",
+              "Suspicious keyword in remittance: urgent",
+              "Suspicious keyword in remittance: secret"
+            ],
+            "message_id": "CHAIN001"
+          },
+          {
+            "agent": "AIAnomalyDetectionAgent",
+            "risk_score": 0.6,
+            "fraud_reasons": [
+              "Rare leading digit 9 (Benford p=0.05)",
+              "Perfectly round amount",
+              "Very large amount: 9,000,000.00"
+            ],
+            "ai_escalated": false,
+            "message_id": "CHAIN001"
+          },
+          {
+            "agent": "GeographicRiskAgent",
+            "risk_score": 1.0,
+            "fraud_reasons": [
+              "High-risk sender jurisdiction: RU",
+              "High-risk receiver jurisdiction: RU"
+            ],
+            "message_id": "CHAIN001"
+          }
+        ],
+        "chain_evidence": {
+          "escalated": true,
+          "stage_order": [
+            "initial_screening",
+            "technical_analysis",
+            "risk_assessment",
+            "compliance_review",
+            "final_review"
+          ],
+          "completed_stages": [
+            "initial_screening",
+            "technical_analysis",
+            "risk_assessment",
+            "compliance_review",
+            "final_review"
+          ],
+          "final_decision": null,
+          "final_confidence": null,
+          "provider_available": false
+        }
+      }
+    ],
+    "chain_results": {
+      "initial_screening": {},
+      "technical_analysis": {},
+      "risk_assessment": {},
+      "compliance_review": {},
+      "final_review": {},
+      "escalation_evidence": {
+        "escalated_message_ids": [
+          "CHAIN001"
+        ],
+        "stage_order": [
+          "initial_screening",
+          "technical_analysis",
+          "risk_assessment",
+          "compliance_review",
+          "final_review"
+        ],
+        "completed_stages": [
+          "initial_screening",
+          "technical_analysis",
+          "risk_assessment",
+          "compliance_review",
+          "final_review"
+        ],
+        "provider_available": false
+      }
+    },
+    "grouping_result": {
+      "orchestrator_analysis": {
+        "analysis": "Offline currency partitioned 3 messages into 2 named groups.",
+        "grouping_dimension": "currency",
+        "groups": [
+          {
+            "group_id": "group_001",
+            "name": "USD transactions",
+            "message_ids": [
+              "GROUP001",
+              "GROUP003"
+            ],
+            "rationale": "Offline currency partition derived from the message currency field or amount suffix."
+          },
+          {
+            "group_id": "group_002",
+            "name": "EUR transactions",
+            "message_ids": [
+              "GROUP002"
+            ],
+            "rationale": "Offline currency partition derived from the message currency field or amount suffix."
+          }
+        ]
+      },
+      "group_results": [
+        {
+          "group_id": "group_001",
+          "group_name": "USD transactions",
+          "grouping_dimension": "currency",
+          "message_ids": [
+            "GROUP001",
+            "GROUP003"
+          ],
+          "messages": [
+            {
+              "message_id": "GROUP001",
+              "amount": "100.00",
+              "currency": "USD"
+            },
+            {
+              "message_id": "GROUP003",
+              "amount": "50.00",
+              "currency": "USD"
+            }
+          ],
+          "worker": "finance-worker",
+          "status": "completed",
+          "results": {
+            "findings": "[offline] Processed 2 messages in USD transactions.",
+            "status": "completed",
+            "recommendations": [
+              "Manual review recommended (LLM offline)"
+            ],
+            "amount_totals_by_currency": {
+              "USD": 150.0
+            },
+            "message_type_distribution": {
+              "UNKNOWN": 2
+            },
+            "high_value_ids": [],
+            "fraud_flags": []
+          }
+        },
+        {
+          "group_id": "group_002",
+          "group_name": "EUR transactions",
+          "grouping_dimension": "currency",
+          "message_ids": [
+            "GROUP002"
+          ],
+          "messages": [
+            {
+              "message_id": "GROUP002",
+              "amount": "200.00",
+              "currency": "EUR"
+            }
+          ],
+          "worker": "finance-worker",
+          "status": "completed",
+          "results": {
+            "findings": "[offline] Processed 1 messages in EUR transactions.",
+            "status": "completed",
+            "recommendations": [
+              "Manual review recommended (LLM offline)"
+            ],
+            "amount_totals_by_currency": {
+              "EUR": 200.0
+            },
+            "message_type_distribution": {
+              "UNKNOWN": 1
+            },
+            "high_value_ids": [],
+            "fraud_flags": []
+          }
+        }
+      ],
+      "summary": "Processed 2 named groups for 3 messages (2 completed) using 5 workers."
+    }
+  },
+  "live": {
+    "performed": true,
+    "correction": {
+      "validation_status": "INVALID",
+      "correction_evidence": {
+        "attempted": true,
+        "applied": false,
+        "attempt_count": 2,
+        "live_model_call_count": 2,
+        "statuses": [
+          "call_failed",
+          "call_failed"
+        ],
+        "call_attempted": [
+          true,
+          true
+        ],
+        "response_received": [
+          false,
+          false
+        ],
+        "parsed_result": [
+          false,
+          false
+        ]
+      },
+      "validation_history_entries": 3
+    },
+    "chain": {
+      "attempted": true,
+      "completed": false,
+      "error_type": "RuntimeError",
+      "failure_classification": {
+        "error_class": "RuntimeError",
+        "provider_status": "unknown",
+        "reason": "No structured provider status was retained; the no-fallback live run raised RuntimeError and raw provider details were intentionally suppressed to avoid secret exposure."
+      }
+    }
+  }
+}

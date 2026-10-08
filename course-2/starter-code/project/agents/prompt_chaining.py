@@ -286,16 +286,46 @@ class PromptChainingPattern:
         final_results = self._call_llm(system_prompt, user_prompt)
         chain_results['final_review'] = final_results
 
-        # Update messages with final decisions
-        if 'final_decisions' in final_results:
-            decision_map = {d['message_id']: d for d in final_results['final_decisions']}
-            for message in messages:
-                msg_id = message.get('message_id')
-                if msg_id in decision_map:
-                    decision = decision_map[msg_id]
-                    message['fraud_decision'] = decision['decision']
-                    message['fraud_confidence'] = decision.get('confidence', 0)
-                    message['fraud_justification'] = decision.get('justification', '')
+        # Attach a compact per-message audit record. The complete stage output
+        # remains in chain_results for the report layer; this avoids losing
+        # which transactions were escalated when reports are filtered.
+        stage_order = [
+            "initial_screening",
+            "technical_analysis",
+            "risk_assessment",
+            "compliance_review",
+            "final_review",
+        ]
+        chain_results["escalation_evidence"] = {
+            "escalated_message_ids": [m.get("message_id") for m in messages],
+            "stage_order": stage_order,
+            "completed_stages": [stage for stage in stage_order if stage in chain_results],
+            "provider_available": Config.has_api_key(),
+        }
+
+        # Update messages with final decisions and preserve escalation evidence.
+        decision_map = {}
+        if isinstance(final_results, dict) and 'final_decisions' in final_results:
+            decision_map = {
+                d.get('message_id'): d
+                for d in final_results['final_decisions']
+                if isinstance(d, dict) and d.get('message_id')
+            }
+        for message in messages:
+            msg_id = message.get('message_id')
+            decision = decision_map.get(msg_id, {})
+            if decision:
+                message['fraud_decision'] = decision['decision']
+                message['fraud_confidence'] = decision.get('confidence', 0)
+                message['fraud_justification'] = decision.get('justification', '')
+            message['chain_evidence'] = {
+                "escalated": True,
+                "stage_order": stage_order,
+                "completed_stages": chain_results["escalation_evidence"]["completed_stages"],
+                "final_decision": decision.get('decision'),
+                "final_confidence": decision.get('confidence'),
+                "provider_available": chain_results["escalation_evidence"]["provider_available"],
+            }
 
         print("Prompt Chaining Analysis Complete!")
         return chain_results

@@ -1,19 +1,22 @@
 ============================================================
 SWIFT PROCESSING REPORT: high_value_report
-Generated: 2026-09-17T14:48:49.202524
+Generated: 2026-10-08T10:22:42.831122
 ============================================================
 
 OPERATIONAL METRICS
 ------------------------------------------------------------
-Total messages       : 3
-Valid / Invalid      : 3 / 0
-Clean / Fraudulent   : 3 / 0
-STP count            : 3
+Total messages       : 2
+Valid / Invalid      : 2 / 0
+Clean / Fraudulent   : 2 / 0
+STP count            : 2
 STP RATE             : 100.0%
-Total value          : $529,455.36
+Total value          : $425,099.44
+
+ORCHESTRATOR REPORT SETS
+------------------------------------------------------------
+[high_value] 2 msgs, dimension=currency 2 groups -> Processed 2 named groups for 2 messages (2 completed) using 5 workers.
 
 TRANSACTIONS
 ------------------------------------------------------------
-b97ef620-153f-4e02-88f5-5efbf13be285 | MT103 | 97903.55 USD | val=VALID | fraud=CLEAN (15.0) | decision=None
-996dd299-96f4-45ab-aa60-2856a5cae046 | MT103 | 76363.07 USD | val=VALID | fraud=CLEAN (15.0) | decision=None
-bb784a1c-1e01-47c7-812e-f3e51569e81b | MT103 | 355188.74 EUR | val=VALID | fraud=CLEAN (15.0) | decision=None
+af0ce7e0-629f-4171-a9fe-93d4b469b025 | MT103 | 56170.54 USD | val=VALID | fraud=CLEAN (30.0) | decision=None
+47b2928c-f56d-4788-9255-e654992a8556 | MT202 | 368928.90 AUD | val=VALID | fraud=CLEAN (40.0) | decision=None

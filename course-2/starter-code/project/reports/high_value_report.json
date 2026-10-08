@@ -1,63 +1,432 @@
 {
   "report_name": "high_value_report",
-  "generated_at": "2026-09-17T14:48:49.202524",
+  "generated_at": "2026-10-08T10:22:42.831122",
   "metrics": {
-    "total_messages": 3,
-    "valid_messages": 3,
+    "total_messages": 2,
+    "valid_messages": 2,
     "invalid_messages": 0,
     "fraudulent_messages": 0,
-    "clean_messages": 3,
-    "stp_count": 3,
+    "clean_messages": 2,
+    "stp_count": 2,
     "stp_rate_pct": 100.0,
-    "total_value": 529455.36
+    "total_value": 425099.44
   },
   "prompt_chain_summary": {},
-  "orchestrator_sets": [],
+  "chain_results": {},
+  "orchestrator_sets": [
+    {
+      "filter": "high_value",
+      "message_count": 2,
+      "grouping_dimension": "currency",
+      "groups": [
+        {
+          "group_id": "group_001",
+          "name": "USD transactions",
+          "message_ids": [
+            "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+          ],
+          "rationale": "Offline currency partition derived from the message currency field or amount suffix."
+        },
+        {
+          "group_id": "group_002",
+          "name": "AUD transactions",
+          "message_ids": [
+            "47b2928c-f56d-4788-9255-e654992a8556"
+          ],
+          "rationale": "Offline currency partition derived from the message currency field or amount suffix."
+        }
+      ],
+      "group_results": [
+        {
+          "group_id": "group_001",
+          "group_name": "USD transactions",
+          "grouping_dimension": "currency",
+          "message_ids": [
+            "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+          ],
+          "messages": [
+            {
+              "message_id": "af0ce7e0-629f-4171-a9fe-93d4b469b025",
+              "message_type": "MT103",
+              "reference": "PMQ234519",
+              "amount": "56170.54",
+              "currency": "USD",
+              "sender_bic": "VUVASGQUZKP",
+              "receiver_bic": "NULPCHTN0M7",
+              "value_date": "261014",
+              "ordering_customer": "Cassandra Brown",
+              "beneficiary": "Jennifer Jones",
+              "remittance_info": "Consulting fees",
+              "validation_status": "VALID",
+              "validation_errors": [],
+              "fraud_status": "CLEAN",
+              "fraud_score": 30.0,
+              "processing_status": "PENDING",
+              "fraud_statements": [],
+              "created_at": "2026-10-08T10:22:42.823020",
+              "processed_at": null,
+              "fraud_evaluation": "PENDING",
+              "chain_analysis": "",
+              "agent_perspectives": "",
+              "note": null,
+              "validation_history": [
+                {
+                  "iteration": 1,
+                  "status": "VALID",
+                  "errors": [],
+                  "correction_attempted": false
+                }
+              ],
+              "correction_evidence": {
+                "attempted": false,
+                "applied": false,
+                "attempt_count": 0,
+                "live_model_call_count": 0,
+                "iterations": []
+              },
+              "fraud_reasons": [
+                "[FraudAmountDetectionAgent] High amount transaction: 56170.54",
+                "[AIAnomalyDetectionAgent] Rare leading digit 5 (Benford p=0.08)",
+                "[GeographicRiskAgent] Cross-border corridor: SG -> CH"
+              ],
+              "fraud_analysis": [
+                {
+                  "agent": "FraudAmountDetectionAgent",
+                  "risk_score": 0.3,
+                  "fraud_reasons": [
+                    "High amount transaction: 56170.54"
+                  ],
+                  "message_id": "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+                },
+                {
+                  "agent": "FraudPatternDetectionAgent",
+                  "risk_score": 0,
+                  "fraud_reasons": [],
+                  "message_id": "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+                },
+                {
+                  "agent": "AIAnomalyDetectionAgent",
+                  "risk_score": 0.2,
+                  "fraud_reasons": [
+                    "Rare leading digit 5 (Benford p=0.08)"
+                  ],
+                  "ai_escalated": false,
+                  "message_id": "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+                },
+                {
+                  "agent": "GeographicRiskAgent",
+                  "risk_score": 0.1,
+                  "fraud_reasons": [
+                    "Cross-border corridor: SG -> CH"
+                  ],
+                  "message_id": "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+                }
+              ],
+              "chain_evidence": {
+                "escalated": true,
+                "stage_order": [
+                  "initial_screening",
+                  "technical_analysis",
+                  "risk_assessment",
+                  "compliance_review",
+                  "final_review"
+                ],
+                "completed_stages": [
+                  "initial_screening",
+                  "technical_analysis",
+                  "risk_assessment",
+                  "compliance_review",
+                  "final_review"
+                ],
+                "final_decision": null,
+                "final_confidence": null,
+                "offline_fallback": true
+              }
+            }
+          ],
+          "worker": "finance-worker",
+          "status": "completed",
+          "results": {
+            "findings": "[offline] Processed 1 messages in USD transactions.",
+            "status": "completed",
+            "recommendations": [
+              "Manual review recommended (LLM offline)"
+            ],
+            "amount_totals_by_currency": {
+              "USD": 56170.54
+            },
+            "message_type_distribution": {
+              "MT103": 1
+            },
+            "high_value_ids": [
+              "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+            ],
+            "fraud_flags": []
+          }
+        },
+        {
+          "group_id": "group_002",
+          "group_name": "AUD transactions",
+          "grouping_dimension": "currency",
+          "message_ids": [
+            "47b2928c-f56d-4788-9255-e654992a8556"
+          ],
+          "messages": [
+            {
+              "message_id": "47b2928c-f56d-4788-9255-e654992a8556",
+              "message_type": "MT202",
+              "reference": "EXY765445",
+              "amount": "368928.90",
+              "currency": "AUD",
+              "sender_bic": "UYRUHKNJKBI",
+              "receiver_bic": "LNCKJPA7CVP",
+              "value_date": "261011",
+              "ordering_customer": null,
+              "beneficiary": null,
+              "remittance_info": null,
+              "validation_status": "VALID",
+              "validation_errors": [],
+              "fraud_status": "CLEAN",
+              "fraud_score": 40.0,
+              "processing_status": "PENDING",
+              "fraud_statements": [],
+              "created_at": "2026-10-08T10:22:42.823260",
+              "processed_at": null,
+              "fraud_evaluation": "PENDING",
+              "chain_analysis": "",
+              "agent_perspectives": "",
+              "note": null,
+              "validation_history": [
+                {
+                  "iteration": 1,
+                  "status": "VALID",
+                  "errors": [],
+                  "correction_attempted": false
+                }
+              ],
+              "correction_evidence": {
+                "attempted": false,
+                "applied": false,
+                "attempt_count": 0,
+                "live_model_call_count": 0,
+                "iterations": []
+              },
+              "fraud_reasons": [
+                "[FraudAmountDetectionAgent] High amount transaction: 368928.9",
+                "[FraudAmountDetectionAgent] Large amount with unusual decimal precision",
+                "[AIAnomalyDetectionAgent] Large amount: 368,928.90",
+                "[GeographicRiskAgent] Cross-border corridor: HK -> JP"
+              ],
+              "fraud_analysis": [
+                {
+                  "agent": "FraudAmountDetectionAgent",
+                  "risk_score": 0.4,
+                  "fraud_reasons": [
+                    "High amount transaction: 368928.9",
+                    "Large amount with unusual decimal precision"
+                  ],
+                  "message_id": "47b2928c-f56d-4788-9255-e654992a8556"
+                },
+                {
+                  "agent": "FraudPatternDetectionAgent",
+                  "risk_score": 0,
+                  "fraud_reasons": [],
+                  "message_id": "47b2928c-f56d-4788-9255-e654992a8556"
+                },
+                {
+                  "agent": "AIAnomalyDetectionAgent",
+                  "risk_score": 0.1,
+                  "fraud_reasons": [
+                    "Large amount: 368,928.90"
+                  ],
+                  "ai_escalated": false,
+                  "message_id": "47b2928c-f56d-4788-9255-e654992a8556"
+                },
+                {
+                  "agent": "GeographicRiskAgent",
+                  "risk_score": 0.1,
+                  "fraud_reasons": [
+                    "Cross-border corridor: HK -> JP"
+                  ],
+                  "message_id": "47b2928c-f56d-4788-9255-e654992a8556"
+                }
+              ],
+              "chain_evidence": {
+                "escalated": true,
+                "stage_order": [
+                  "initial_screening",
+                  "technical_analysis",
+                  "risk_assessment",
+                  "compliance_review",
+                  "final_review"
+                ],
+                "completed_stages": [
+                  "initial_screening",
+                  "technical_analysis",
+                  "risk_assessment",
+                  "compliance_review",
+                  "final_review"
+                ],
+                "final_decision": null,
+                "final_confidence": null,
+                "offline_fallback": true
+              }
+            }
+          ],
+          "worker": "finance-worker",
+          "status": "completed",
+          "results": {
+            "findings": "[offline] Processed 1 messages in AUD transactions.",
+            "status": "completed",
+            "recommendations": [
+              "Manual review recommended (LLM offline)"
+            ],
+            "amount_totals_by_currency": {
+              "AUD": 368928.9
+            },
+            "message_type_distribution": {
+              "MT202": 1
+            },
+            "high_value_ids": [
+              "47b2928c-f56d-4788-9255-e654992a8556"
+            ],
+            "fraud_flags": []
+          }
+        }
+      ],
+      "group_count": 2,
+      "summary": "Processed 2 named groups for 2 messages (2 completed) using 5 workers."
+    }
+  ],
   "transactions": [
     {
-      "message_id": "b97ef620-153f-4e02-88f5-5efbf13be285",
+      "message_id": "af0ce7e0-629f-4171-a9fe-93d4b469b025",
       "message_type": "MT103",
-      "amount": "97903.55",
+      "amount": "56170.54",
       "currency": "USD",
       "validation_status": "VALID",
+      "validation_errors": [],
+      "validation_history": [
+        {
+          "iteration": 1,
+          "status": "VALID",
+          "errors": [],
+          "correction_attempted": false
+        }
+      ],
+      "correction_evidence": {
+        "attempted": false,
+        "applied": false,
+        "attempt_count": 0,
+        "live_model_call_count": 0,
+        "iterations": []
+      },
       "fraud_status": "CLEAN",
-      "fraud_score": 15.0,
+      "fraud_score": 30.0,
       "fraud_decision": null,
       "fraud_reasons": [
-        "[FraudAmountDetectionAgent] High amount transaction: 97903.55",
-        "[AIAnomalyDetectionAgent] Rare leading digit 9 (Benford p=0.05)",
-        "[GeographicRiskAgent] Cross-border corridor: CH -> SG"
+        "[FraudAmountDetectionAgent] High amount transaction: 56170.54",
+        "[AIAnomalyDetectionAgent] Rare leading digit 5 (Benford p=0.08)",
+        "[GeographicRiskAgent] Cross-border corridor: SG -> CH"
+      ],
+      "fraud_analysis": [
+        {
+          "agent": "FraudAmountDetectionAgent",
+          "risk_score": 0.3,
+          "fraud_reasons": [
+            "High amount transaction: 56170.54"
+          ],
+          "message_id": "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+        },
+        {
+          "agent": "FraudPatternDetectionAgent",
+          "risk_score": 0,
+          "fraud_reasons": [],
+          "message_id": "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+        },
+        {
+          "agent": "AIAnomalyDetectionAgent",
+          "risk_score": 0.2,
+          "fraud_reasons": [
+            "Rare leading digit 5 (Benford p=0.08)"
+          ],
+          "ai_escalated": false,
+          "message_id": "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+        },
+        {
+          "agent": "GeographicRiskAgent",
+          "risk_score": 0.1,
+          "fraud_reasons": [
+            "Cross-border corridor: SG -> CH"
+          ],
+          "message_id": "af0ce7e0-629f-4171-a9fe-93d4b469b025"
+        }
       ]
     },
     {
-      "message_id": "996dd299-96f4-45ab-aa60-2856a5cae046",
-      "message_type": "MT103",
-      "amount": "76363.07",
-      "currency": "USD",
+      "message_id": "47b2928c-f56d-4788-9255-e654992a8556",
+      "message_type": "MT202",
+      "amount": "368928.90",
+      "currency": "AUD",
       "validation_status": "VALID",
+      "validation_errors": [],
+      "validation_history": [
+        {
+          "iteration": 1,
+          "status": "VALID",
+          "errors": [],
+          "correction_attempted": false
+        }
+      ],
+      "correction_evidence": {
+        "attempted": false,
+        "applied": false,
+        "attempt_count": 0,
+        "live_model_call_count": 0,
+        "iterations": []
+      },
       "fraud_status": "CLEAN",
-      "fraud_score": 15.0,
+      "fraud_score": 40.0,
       "fraud_decision": null,
       "fraud_reasons": [
-        "[FraudAmountDetectionAgent] High amount transaction: 76363.07",
-        "[AIAnomalyDetectionAgent] Rare leading digit 7 (Benford p=0.06)",
-        "[GeographicRiskAgent] Cross-border corridor: SG -> DE"
-      ]
-    },
-    {
-      "message_id": "bb784a1c-1e01-47c7-812e-f3e51569e81b",
-      "message_type": "MT103",
-      "amount": "355188.74",
-      "currency": "EUR",
-      "validation_status": "VALID",
-      "fraud_status": "CLEAN",
-      "fraud_score": 15.0,
-      "fraud_decision": null,
-      "fraud_reasons": [
-        "[FraudAmountDetectionAgent] High amount transaction: 355188.74",
+        "[FraudAmountDetectionAgent] High amount transaction: 368928.9",
         "[FraudAmountDetectionAgent] Large amount with unusual decimal precision",
-        "[AIAnomalyDetectionAgent] Large amount: 355,188.74",
-        "[GeographicRiskAgent] Cross-border corridor: US -> CH"
+        "[AIAnomalyDetectionAgent] Large amount: 368,928.90",
+        "[GeographicRiskAgent] Cross-border corridor: HK -> JP"
+      ],
+      "fraud_analysis": [
+        {
+          "agent": "FraudAmountDetectionAgent",
+          "risk_score": 0.4,
+          "fraud_reasons": [
+            "High amount transaction: 368928.9",
+            "Large amount with unusual decimal precision"
+          ],
+          "message_id": "47b2928c-f56d-4788-9255-e654992a8556"
+        },
+        {
+          "agent": "FraudPatternDetectionAgent",
+          "risk_score": 0,
+          "fraud_reasons": [],
+          "message_id": "47b2928c-f56d-4788-9255-e654992a8556"
+        },
+        {
+          "agent": "AIAnomalyDetectionAgent",
+          "risk_score": 0.1,
+          "fraud_reasons": [
+            "Large amount: 368,928.90"
+          ],
+          "ai_escalated": false,
+          "message_id": "47b2928c-f56d-4788-9255-e654992a8556"
+        },
+        {
+          "agent": "GeographicRiskAgent",
+          "risk_score": 0.1,
+          "fraud_reasons": [
+            "Cross-border corridor: HK -> JP"
+          ],
+          "message_id": "47b2928c-f56d-4788-9255-e654992a8556"
+        }
       ]
     }
   ]

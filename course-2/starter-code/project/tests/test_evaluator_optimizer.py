@@ -105,3 +105,15 @@ def test_optimize_offline_preserves_required_fields():
     corrected = _pattern().optimize_message(msg, ["Some error"])
     for field in ("message_type", "reference", "amount", "sender_bic", "receiver_bic"):
         assert field in corrected
+
+def test_offline_processing_records_noop_correction_evidence():
+    result = _pattern().process_with_evaluator_optimizer([
+        {"message_id": "INVALID-OFFLINE"},
+    ])[0]
+
+    evidence = result["correction_evidence"]
+    assert evidence["attempted"] is True
+    assert evidence["applied"] is False
+    assert evidence["live_model_call_count"] == 0
+    assert all(item["status"] == "offline_noop" for item in evidence["iterations"])
+    assert result["validation_history"][-1]["status"] == "INVALID"

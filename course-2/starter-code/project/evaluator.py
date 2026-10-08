@@ -64,7 +64,7 @@ class SolutionEvaluator:
             ),
             Criterion(
                 "delegation",
-                "Orchestrator delegated tasks to workers",
+                "Orchestrator delegated named groups to workers",
                 0.15,
                 self._delegation_score,
             ),
@@ -99,10 +99,17 @@ class SolutionEvaluator:
 
     @staticmethod
     def _delegation_score(report: Dict[str, Any]) -> float:
+        """Score completed named groups using the migrated report contract."""
         sets = report.get("orchestrator_sets", [])
         if not sets:
             return 0.0
-        delegated = sum(1 for s in sets if (s.get("task_count") or 0) > 0)
+        delegated = 0
+        for batch in sets:
+            group_count = int(batch.get("group_count") or 0)
+            group_results = batch.get("group_results", [])
+            completed = sum(1 for result in group_results if result.get("status") == "completed")
+            if group_count > 0 and completed == group_count:
+                delegated += 1
         return delegated / len(sets)
 
     # --- public API ---------------------------------------------------- #

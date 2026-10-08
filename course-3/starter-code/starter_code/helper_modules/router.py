@@ -1,6 +1,7 @@
 """DSPy tool router: few-shot demos from config.toml, a confidence score, and a feedback loop."""
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from statistics import mean
 
@@ -49,12 +50,15 @@ class ToolRouter:
         with FEEDBACK.open("a") as f:
             f.write(json.dumps({"query": query, "tools": correct_tools}) + "\n")
 
+    def _accuracy(self, examples: list[dspy.Example]) -> float:
+        with ThreadPoolExecutor(4) as pool:  # Vocareum caps parallel calls per key
+            return mean(pool.map(lambda e: _matches(e, self(e.query)), examples))
+
     def optimize(self) -> dict:
-        """Recompile the router on seed examples + feedback, keep demos that route correctly, save it."""
+        """Recompile the router with seed examples + feedback as labeled demos, save it, report accuracy."""
         examples = self._examples()
-        before = mean(_matches(e, self(e.query)) for e in examples)
-        self.program = dspy.BootstrapFewShot(metric=_matches, max_bootstrapped_demos=8, max_labeled_demos=16).compile(
+        before = self._accuracy(examples)
+        self.program = dspy.LabeledFewShot(k=len(examples)).compile(
             dspy.ChainOfThought(self.signature), trainset=examples)
         self.program.save(SAVED)
-        return {"examples": len(examples), "accuracy_before": before,
-                "accuracy_after": mean(_matches(e, self(e.query)) for e in examples)}
+        return {"examples": len(examples), "accuracy_before": before, "accuracy_after": self._accuracy(examples)}

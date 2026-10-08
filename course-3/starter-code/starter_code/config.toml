@@ -6,8 +6,8 @@
 provider_order = ["vocareum", "openrouter"]
 temperature = 0
 context_window = 16385
-# Chunks per embedding request; mistral-embed caps a request at ~16k tokens (12 x 1024-token chunks fits).
-embed_batch_size = 12
+# Starting chunks per embedding request; halved automatically if a provider rejects the batch as too large.
+embed_batch_size = 100
 # Concurrent embedding requests per document while building an index.
 embed_workers = 8
 

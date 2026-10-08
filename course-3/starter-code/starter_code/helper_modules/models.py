@@ -23,6 +23,19 @@ CONFIG = tomllib.loads((Path(__file__).resolve().parent.parent / "config.toml").
 TOKEN_COUNTER = TokenCountingHandler()  # cumulative LlamaIndex LLM + embedding tokens
 
 
+class AdaptiveEmbedding(OpenAIEmbedding):
+    """Embedding batch limits differ per provider, so a batch rejected as too large is split in half and retried."""
+
+    def _get_text_embeddings(self, texts: list[str]) -> list[list[float]]:
+        try:
+            return super()._get_text_embeddings(texts)
+        except openai.BadRequestError:
+            if len(texts) == 1:
+                raise
+            half = len(texts) // 2
+            return self._get_text_embeddings(texts[:half]) + self._get_text_embeddings(texts[half:])
+
+
 @dataclass(frozen=True)
 class Provider:
     name: str
@@ -70,11 +83,11 @@ def configure_models() -> OpenAILike:
     llm = OpenAILike(model=p.llm, api_base=p.api_base, api_key=p.api_key, temperature=m["temperature"],
                      is_chat_model=True, context_window=m["context_window"], callback_manager=callbacks)
     Settings.llm = llm
-    Settings.embed_model = OpenAIEmbedding(model_name=p.embedding, api_base=p.api_base, api_key=p.api_key,
-                                           embed_batch_size=m["embed_batch_size"], num_workers=m["embed_workers"],
+    Settings.embed_model = AdaptiveEmbedding(model_name=p.embedding, api_base=p.api_base, api_key=p.api_key,
+                                           embed_batch_size=m["embed_batch_size"],
                                            callback_manager=callbacks)
     import dspy  # imported late: dspy's lazy loader breaks `openai` if it is imported first
 
     dspy.configure(lm=dspy.LM(f"openai/{p.llm}", api_base=p.api_base, api_key=p.api_key,
-                              temperature=m["temperature"], cache=False), track_usage=True)
+                              temperature=m["temperature"], cache=False, num_retries=5), track_usage=True)
     return llm
